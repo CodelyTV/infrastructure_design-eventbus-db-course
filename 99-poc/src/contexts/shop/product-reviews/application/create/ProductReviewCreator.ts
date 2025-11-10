@@ -1,7 +1,10 @@
+import { Service } from "diod";
+
 import { UserFinder } from "../../../users/application/find/UserFinder";
 import { ProductReview } from "../../domain/ProductReview";
 import { ProductReviewRepository } from "../../domain/ProductReviewRepository";
 
+@Service()
 export class ProductReviewCreator {
 	constructor(
 		private readonly repository: ProductReviewRepository,

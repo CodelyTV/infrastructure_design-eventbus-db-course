@@ -17,7 +17,9 @@ type DatabaseProductReviewRow = {
 };
 
 @Service()
-export class PostgresProductReviewRepository implements ProductReviewRepository {
+export class PostgresProductReviewRepository
+	implements ProductReviewRepository
+{
 	private readonly sql: postgres.Sql;
 
 	constructor(connection: PostgresConnection) {
