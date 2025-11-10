@@ -6,7 +6,6 @@ import { ShopUserEmail } from "./ShopUserEmail";
 import { ShopUserId } from "./ShopUserId";
 import { ShopUserName } from "./ShopUserName";
 import { ShopUserProfilePicture } from "./ShopUserProfilePicture";
-import { ShopUserRegisteredDomainEvent } from "./ShopUserRegisteredDomainEvent";
 import { ShopUserStatus } from "./ShopUserStatus";
 
 export class ShopUser extends AggregateRoot {
@@ -26,27 +25,13 @@ export class ShopUser extends AggregateRoot {
 		email: string,
 		profilePicture: string,
 	): ShopUser {
-		const defaultUserStatus = ShopUserStatus.Active;
-
-		const user = new ShopUser(
+		return new ShopUser(
 			new ShopUserId(id),
 			new ShopUserName(name),
 			new ShopUserEmail(email),
 			new ShopUserProfilePicture(profilePicture),
-			defaultUserStatus,
+			ShopUserStatus.Active,
 		);
-
-		user.record(
-			new ShopUserRegisteredDomainEvent(
-				id,
-				name,
-				email,
-				profilePicture,
-				defaultUserStatus,
-			),
-		);
-
-		return user;
 	}
 
 	static fromPrimitives(primitives: Primitives<ShopUser>): ShopUser {

@@ -2,9 +2,9 @@ import {
 	WelcomeEmail,
 	WelcomeEmailPrimitives,
 } from "../../../../../src/contexts/retention/email/domain/WelcomeEmail";
+import { UserIdMother } from "../../../mooc/users/domain/UserIdMother";
+import { UserNameMother } from "../../../mooc/users/domain/UserNameMother";
 import { EmailAddressMother } from "../../../shared/domain/EmailAddressMother";
-import { UserIdMother } from "../../../shop/shop-user/domain/ShopUserIdMother";
-import { UserNameMother } from "../../../shop/shop-user/domain/ShopUserNameMother";
 
 import { EmailBodyMother } from "./EmailBodyMother";
 import { EmailIdMother } from "./EmailIdMother";

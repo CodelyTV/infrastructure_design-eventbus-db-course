@@ -1,5 +1,6 @@
 import { UserRegistrar } from "../../../../../../src/contexts/mooc/users/application/registrar/UserRegistrar";
 import { MockEventBus } from "../../../../shared/infrastructure/MockEventBus";
+import { UserMother } from "../../domain/UserMother";
 import { UserRegisteredDomainEventMother } from "../../domain/UserRegisteredDomainEventMother";
 import { MockUserRepository } from "../../infrastructure/MockUserRepository";
 

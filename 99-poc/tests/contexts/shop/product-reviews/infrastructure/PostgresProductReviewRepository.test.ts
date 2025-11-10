@@ -46,14 +46,10 @@ describe("PostgresProductReviewRepository should", () => {
 		const review1 = ProductReviewMother.create({
 			userId: user1.id.value,
 			productId: product.id.value,
-			userName: user1.name.value,
-			userProfilePicture: user1.profilePicture.value,
 		});
 		const review2 = ProductReviewMother.create({
 			userId: user2.id.value,
 			productId: product.id.value,
-			userName: user2.name.value,
-			userProfilePicture: user2.profilePicture.value,
 		});
 
 		await userRepository.save(user1);

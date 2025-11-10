@@ -1,6 +1,8 @@
+import { UserRegisteredDomainEvent } from "../../../../../../src/contexts/mooc/users/domain/UserRegisteredDomainEvent";
 import { UpdateLastActivityDateOnUserUpdated } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
 import { UserLastActivityUpdater } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UserLastActivityUpdater";
 import { UserIdMother } from "../../../../mooc/users/domain/UserIdMother";
+import { UserRegisteredDomainEventMother } from "../../../../mooc/users/domain/UserRegisteredDomainEventMother";
 import { RetentionUserMother } from "../../domain/RetentionUserMother";
 import { MockRetentionUserRepository } from "../../infrastructure/MockRetentionUserRepository";
 
@@ -11,7 +13,7 @@ describe("UpdateLastActivityDateOnUserUpdated should", () => {
 	);
 
 	it("throw an error if the user does not exist", async () => {
-		const event = UserEmailUpdatedDomainEventMother.create();
+		const event = UserRegisteredDomainEventMother.create();
 		const userId = UserIdMother.create(event.id);
 
 		repository.shouldNotSearch(userId);
@@ -20,7 +22,7 @@ describe("UpdateLastActivityDateOnUserUpdated should", () => {
 	});
 
 	it("not update last activity when the new is older than the actual", async () => {
-		const event = UserEmailUpdatedDomainEventMother.fromYesterday();
+		const event = UserRegisteredDomainEventMother.fromYesterday();
 		const existingUser = RetentionUserMother.fromToday(event.id);
 
 		repository.shouldSearch(existingUser);
@@ -48,13 +50,7 @@ describe("UpdateLastActivityDateOnUserUpdated should", () => {
 		);
 	});
 
-	function validEvents(): (
-		| UserEmailUpdatedDomainEvent
-		| UserArchivedDomainEvent
-	)[] {
-		return [
-			UserEmailUpdatedDomainEventMother.fromToday(),
-			UserArchivedDomainEventMother.fromToday(),
-		];
+	function validEvents(): UserRegisteredDomainEvent[] {
+		return [UserRegisteredDomainEventMother.fromToday()];
 	}
 });

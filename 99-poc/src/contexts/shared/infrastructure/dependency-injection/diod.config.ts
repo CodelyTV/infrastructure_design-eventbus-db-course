@@ -24,7 +24,6 @@ import { PostgresProductRepository } from "../../../shop/products/infrastructure
 import { ShopUserFinder } from "../../../shop/shop-user/application/find/ShopUserFinder";
 import { ShopUserRegistrar } from "../../../shop/shop-user/application/registrar/ShopUserRegistrar";
 import { ShopUserSearcher } from "../../../shop/shop-user/application/search/ShopUserSearcher";
-import { ShopUserEmailUpdater } from "../../../shop/shop-user/application/update-email/ShopUserEmailUpdater";
 import { ShopUserRepository } from "../../../shop/shop-user/domain/ShopUserRepository";
 import { PostgresShopUserRepository } from "../../../shop/shop-user/infrastructure/PostgresShopUserRepository";
 import { EventBus } from "../../domain/event/EventBus";
@@ -70,7 +69,6 @@ builder.registerAndUse(PostgresShopUserRepository);
 builder.registerAndUse(ShopUserRegistrar);
 builder.registerAndUse(ShopUserFinder);
 builder.registerAndUse(ShopUserSearcher);
-builder.registerAndUse(ShopUserEmailUpdater);
 
 // Shop - Product
 builder.register(ProductRepository).use(PostgresProductRepository);

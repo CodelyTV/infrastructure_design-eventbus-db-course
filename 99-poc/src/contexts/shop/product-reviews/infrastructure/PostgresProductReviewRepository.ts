@@ -12,8 +12,6 @@ type DatabaseProductReviewRow = {
 	product_id: string;
 	rating: number;
 	comment: string;
-	user_name: string;
-	user_profile_picture: string;
 };
 
 @Service()
@@ -43,16 +41,13 @@ export class PostgresProductReviewRepository
 	async searchByProduct(productId: ProductId): Promise<ProductReview[]> {
 		const result = await this.sql<DatabaseProductReviewRow[]>`
 			SELECT
-				r.id,
-				r.user_id,
-				r.product_id,
-				r.rating,
-				r.comment,
-				u.name as user_name,
-				u.profile_picture as user_profile_picture
-			FROM shop.product_reviews r
-			INNER JOIN shop.users u ON r.user_id = u.id
-			WHERE r.product_id = ${productId.value};
+				id,
+				user_id,
+				product_id,
+				rating,
+				comment
+			FROM shop.product_reviews
+			WHERE product_id = ${productId.value};
 		`;
 
 		return result.map((row) => this.toProductReview(row));
@@ -65,8 +60,6 @@ export class PostgresProductReviewRepository
 			row.product_id,
 			row.rating,
 			row.comment,
-			row.user_name,
-			row.user_profile_picture,
 		);
 	}
 }

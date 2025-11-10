@@ -1,8 +1,8 @@
 import { SendWelcomeEmailOnUserRegistered } from "../../../../../src/contexts/retention/email/application/send-welcome-email/SendWelcomeEmailOnUserRegistered";
 import { WelcomeEmailSender } from "../../../../../src/contexts/retention/email/application/send-welcome-email/WelcomeEmailSender";
+import { UserRegisteredDomainEventMother } from "../../../mooc/users/domain/UserRegisteredDomainEventMother";
 import { MockUuidGenerator } from "../../../shared/domain/MockUuidGenerator";
 import { MockEventBus } from "../../../shared/infrastructure/MockEventBus";
-import { UserRegisteredDomainEventMother } from "../../../shop/shop-user/domain/ShopUserRegisteredDomainEventMother";
 import { WelcomeEmailMother } from "../domain/WelcomeEmailMother";
 import { WelcomeEmailSentDomainEventMother } from "../domain/WelcomeEmailSentDomainEventMother";
 import { MockEmailSender } from "../infrastructure/MockEmailSender";
