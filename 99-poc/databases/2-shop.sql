@@ -1,25 +1,27 @@
+CREATE SCHEMA shop;
+
 CREATE TABLE shop.products (
-	id UUID PRIMARY KEY,
-	name VARCHAR(255),
-	price_amount DECIMAL(10, 2),
-	price_currency CHAR(3),
-	image_urls JSON,
-	views INT,
-	creation_date TIMESTAMP
+	id uuid PRIMARY KEY NOT NULL,
+	name TEXT NOT NULL,
+	price_amount DECIMAL(10, 2) NOT NULL,
+	price_currency CHAR(3) NOT NULL,
+	image_urls JSONB NOT NULL,
+	views INT NOT NULL DEFAULT 0,
+	creation_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE shop.users (
-	id UUID PRIMARY KEY,
-	name VARCHAR(255),
-	email VARCHAR(255),
-	profile_picture VARCHAR(255)
+	id uuid PRIMARY KEY NOT NULL,
+	name TEXT NOT NULL,
+	email TEXT NOT NULL,
+	profile_picture TEXT
 );
 
 CREATE TABLE shop.product_reviews (
-	id UUID PRIMARY KEY,
-	user_id UUID,
-	product_id UUID,
-	rating FLOAT,
-	comment VARCHAR(500),
-	is_featured BOOLEAN DEFAULT FALSE
+	id uuid PRIMARY KEY NOT NULL,
+	user_id uuid NOT NULL,
+	product_id uuid NOT NULL,
+	rating REAL NOT NULL,
+	comment TEXT NOT NULL,
+	is_featured BOOLEAN NOT NULL
 );

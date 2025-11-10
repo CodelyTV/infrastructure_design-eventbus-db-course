@@ -13,6 +13,18 @@ import { UserRegistrar } from "../../../mooc/users/application/registrar/UserReg
 import { DomainUserFinder } from "../../../mooc/users/domain/DomainUserFinder";
 import { UserRepository } from "../../../mooc/users/domain/UserRepository";
 import { PostgresUserRepository } from "../../../mooc/users/infrastructure/PostgresUserRepository";
+import { ProductReviewCreator } from "../../../shop/product-reviews/application/create/ProductReviewCreator";
+import { ProductReviewsByProductSearcher } from "../../../shop/product-reviews/application/search-by-product-id/ProductReviewsByProductSearcher";
+import { PostgresProductReviewRepository } from "../../../shop/product-reviews/infrastructure/PostgresProductReviewRepository";
+import { ProductSearcher } from "../../../shop/products/application/search/ProductSearcher";
+import { AllProductsSearcher } from "../../../shop/products/application/search-all/AllProductsSearcher";
+import { PostgresProductRepository } from "../../../shop/products/infrastructure/PostgresProductRepository";
+import { UserArchiver } from "../../../shop/users/application/archive/UserArchiver";
+import { UserFinder as ShopUserFinder } from "../../../shop/users/application/find/UserFinder";
+import { UserRegistrar as ShopUserRegistrar } from "../../../shop/users/application/registrar/UserRegistrar";
+import { UserSearcher } from "../../../shop/users/application/search/UserSearcher";
+import { UserEmailUpdater } from "../../../shop/users/application/update-email/UserEmailUpdater";
+import { PostgresUserRepository as ShopPostgresUserRepository } from "../../../shop/users/infrastructure/PostgresUserRepository";
 import { EventBus } from "../../domain/event/EventBus";
 import { InMemoryEventBus } from "../domain-event/InMemoryEventBus";
 import { PostgresConnection } from "../postgres/PostgresConnection";
@@ -35,22 +47,38 @@ builder
 
 builder.register(EventBus).use(InMemoryEventBus);
 
-// User
+// Mooc - User
 builder.register(UserRepository).use(PostgresUserRepository);
 builder.registerAndUse(PostgresUserRepository);
-
 builder.registerAndUse(UserRegistrar);
-
 builder.registerAndUse(UserFinder);
 builder.registerAndUse(DomainUserFinder);
 
-// Course
+// Mooc - Course
 builder.register(CourseRepository).use(PostgresCourseRepository);
 builder.registerAndUse(PostgresCourseRepository);
 builder.registerAndUse(CourseFinder);
 builder.registerAndUse(CourseSearcher);
 builder.registerAndUse(CoursesByIdsSearcher);
 builder.registerAndUse(AllCoursesSearcher);
+
+// Shop - User
+builder.registerAndUse(ShopPostgresUserRepository);
+builder.registerAndUse(ShopUserRegistrar);
+builder.registerAndUse(ShopUserFinder);
+builder.registerAndUse(UserSearcher);
+builder.registerAndUse(UserEmailUpdater);
+builder.registerAndUse(UserArchiver);
+
+// Shop - Product
+builder.registerAndUse(PostgresProductRepository);
+builder.registerAndUse(ProductSearcher);
+builder.registerAndUse(AllProductsSearcher);
+
+// Shop - ProductReview
+builder.registerAndUse(PostgresProductReviewRepository);
+builder.registerAndUse(ProductReviewCreator);
+builder.registerAndUse(ProductReviewsByProductSearcher);
 
 // Export container
 export const container = builder.build();
