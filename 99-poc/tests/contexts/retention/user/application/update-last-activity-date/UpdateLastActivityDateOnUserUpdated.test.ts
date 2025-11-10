@@ -1,10 +1,6 @@
 import { UpdateLastActivityDateOnUserUpdated } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
 import { UserLastActivityUpdater } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UserLastActivityUpdater";
-import { UserArchivedDomainEvent } from "../../../../../../src/contexts/shop/users/domain/UserArchivedDomainEvent";
-import { UserEmailUpdatedDomainEvent } from "../../../../../../src/contexts/shop/users/domain/UserEmailUpdatedDomainEvent";
-import { UserArchivedDomainEventMother } from "../../../../shop/users/domain/UserArchivedDomainEventMother";
-import { UserEmailUpdatedDomainEventMother } from "../../../../shop/users/domain/UserEmailUpdatedDomainEventMother";
-import { UserIdMother } from "../../../../shop/users/domain/UserIdMother";
+import { UserIdMother } from "../../../../mooc/users/domain/UserIdMother";
 import { RetentionUserMother } from "../../domain/RetentionUserMother";
 import { MockRetentionUserRepository } from "../../infrastructure/MockRetentionUserRepository";
 

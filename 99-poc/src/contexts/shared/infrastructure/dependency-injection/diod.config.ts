@@ -21,13 +21,12 @@ import { ProductSearcher } from "../../../shop/products/application/search/Produ
 import { AllProductsSearcher } from "../../../shop/products/application/search-all/AllProductsSearcher";
 import { ProductRepository } from "../../../shop/products/domain/ProductRepository";
 import { PostgresProductRepository } from "../../../shop/products/infrastructure/PostgresProductRepository";
-import { UserArchiver } from "../../../shop/users/application/archive/UserArchiver";
-import { UserFinder as ShopUserFinder } from "../../../shop/users/application/find/UserFinder";
-import { UserRegistrar as ShopUserRegistrar } from "../../../shop/users/application/registrar/UserRegistrar";
-import { UserSearcher } from "../../../shop/users/application/search/UserSearcher";
-import { UserEmailUpdater } from "../../../shop/users/application/update-email/UserEmailUpdater";
-import { UserRepository as ShopUserRepository } from "../../../shop/users/domain/UserRepository";
-import { PostgresUserRepository as ShopPostgresUserRepository } from "../../../shop/users/infrastructure/PostgresUserRepository";
+import { ShopUserFinder } from "../../../shop/shop-user/application/find/ShopUserFinder";
+import { ShopUserRegistrar } from "../../../shop/shop-user/application/registrar/ShopUserRegistrar";
+import { ShopUserSearcher } from "../../../shop/shop-user/application/search/ShopUserSearcher";
+import { ShopUserEmailUpdater } from "../../../shop/shop-user/application/update-email/ShopUserEmailUpdater";
+import { ShopUserRepository } from "../../../shop/shop-user/domain/ShopUserRepository";
+import { PostgresShopUserRepository } from "../../../shop/shop-user/infrastructure/PostgresShopUserRepository";
 import { EventBus } from "../../domain/event/EventBus";
 import { InMemoryEventBus } from "../domain-event/InMemoryEventBus";
 import { PostgresConnection } from "../postgres/PostgresConnection";
@@ -66,13 +65,12 @@ builder.registerAndUse(CoursesByIdsSearcher);
 builder.registerAndUse(AllCoursesSearcher);
 
 // Shop - User
-builder.register(ShopUserRepository).use(ShopPostgresUserRepository);
-builder.registerAndUse(ShopPostgresUserRepository);
+builder.register(ShopUserRepository).use(PostgresShopUserRepository);
+builder.registerAndUse(PostgresShopUserRepository);
 builder.registerAndUse(ShopUserRegistrar);
 builder.registerAndUse(ShopUserFinder);
-builder.registerAndUse(UserSearcher);
-builder.registerAndUse(UserEmailUpdater);
-builder.registerAndUse(UserArchiver);
+builder.registerAndUse(ShopUserSearcher);
+builder.registerAndUse(ShopUserEmailUpdater);
 
 // Shop - Product
 builder.register(ProductRepository).use(PostgresProductRepository);

@@ -2,7 +2,7 @@ import { SendWelcomeEmailOnUserRegistered } from "../../../../../src/contexts/re
 import { WelcomeEmailSender } from "../../../../../src/contexts/retention/email/application/send-welcome-email/WelcomeEmailSender";
 import { MockUuidGenerator } from "../../../shared/domain/MockUuidGenerator";
 import { MockEventBus } from "../../../shared/infrastructure/MockEventBus";
-import { UserRegisteredDomainEventMother } from "../../../shop/users/domain/UserRegisteredDomainEventMother";
+import { UserRegisteredDomainEventMother } from "../../../shop/shop-user/domain/ShopUserRegisteredDomainEventMother";
 import { WelcomeEmailMother } from "../domain/WelcomeEmailMother";
 import { WelcomeEmailSentDomainEventMother } from "../domain/WelcomeEmailSentDomainEventMother";
 import { MockEmailSender } from "../infrastructure/MockEmailSender";

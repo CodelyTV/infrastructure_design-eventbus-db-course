@@ -1,4 +1,4 @@
-import { UserId } from "../../../shop/users/domain/UserId";
+import { ShopUserId } from "../../../shop/shop-user/domain/ShopUserId";
 
 export type RetentionUserPrimitives = {
 	id: string;
@@ -7,13 +7,13 @@ export type RetentionUserPrimitives = {
 
 export class RetentionUser {
 	constructor(
-		public readonly id: UserId,
+		public readonly id: ShopUserId,
 		private lastActivityDate: Date,
 	) {}
 
 	static fromPrimitives(primitives: RetentionUserPrimitives): RetentionUser {
 		return new RetentionUser(
-			new UserId(primitives.id),
+			new ShopUserId(primitives.id),
 			primitives.lastActivityDate,
 		);
 	}

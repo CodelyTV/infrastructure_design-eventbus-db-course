@@ -2,9 +2,9 @@ import { faker } from "@faker-js/faker";
 
 import { ProductReview } from "../../../../../src/contexts/shop/product-reviews/domain/ProductReview";
 import { ProductIdMother } from "../../products/domain/ProductIdMother";
-import { UserIdMother } from "../../users/domain/UserIdMother";
-import { UserNameMother } from "../../users/domain/UserNameMother";
-import { UserProfilePictureMother } from "../../users/domain/UserProfilePictureMother";
+import { UserIdMother } from "../../shop-user/domain/ShopUserIdMother";
+import { UserNameMother } from "../../shop-user/domain/ShopUserNameMother";
+import { UserProfilePictureMother } from "../../shop-user/domain/ShopUserProfilePictureMother";
 
 import { ProductReviewIdMother } from "./ProductReviewIdMother";
 

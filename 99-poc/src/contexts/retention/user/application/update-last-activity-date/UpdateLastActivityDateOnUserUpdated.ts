@@ -2,22 +2,22 @@ import { Service } from "diod";
 
 import { DomainEventClass } from "../../../../shared/domain/event/DomainEventClass";
 import { DomainEventSubscriber } from "../../../../shared/domain/event/DomainEventSubscriber";
-import { UserDomainEvent } from "../../../../shop/users/domain/UserDomainEvent";
+import { ShopUserDomainEvent } from "../../../../shop/shop-user/domain/ShopUserDomainEvent";
 
 import { UserLastActivityUpdater } from "./UserLastActivityUpdater";
 
 @Service()
 export class UpdateLastActivityDateOnUserUpdated
-	implements DomainEventSubscriber<UserDomainEvent>
+	implements DomainEventSubscriber<ShopUserDomainEvent>
 {
 	constructor(private readonly updater: UserLastActivityUpdater) {}
 
-	async on(event: UserDomainEvent): Promise<void> {
+	async on(event: ShopUserDomainEvent): Promise<void> {
 		await this.updater.update(event.id, event.occurredOn);
 	}
 
 	subscribedTo(): DomainEventClass[] {
-		return [UserDomainEvent];
+		return [ShopUserDomainEvent];
 	}
 
 	name(): string {

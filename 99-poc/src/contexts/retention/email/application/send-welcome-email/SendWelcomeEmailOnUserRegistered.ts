@@ -2,22 +2,22 @@ import { Service } from "diod";
 
 import { DomainEventClass } from "../../../../shared/domain/event/DomainEventClass";
 import { DomainEventSubscriber } from "../../../../shared/domain/event/DomainEventSubscriber";
-import { UserRegisteredDomainEvent } from "../../../../shop/users/domain/UserRegisteredDomainEvent";
+import { ShopUserRegisteredDomainEvent } from "../../../../shop/shop-user/domain/ShopUserRegisteredDomainEvent";
 
 import { WelcomeEmailSender } from "./WelcomeEmailSender";
 
 @Service()
 export class SendWelcomeEmailOnUserRegistered
-	implements DomainEventSubscriber<UserRegisteredDomainEvent>
+	implements DomainEventSubscriber<ShopUserRegisteredDomainEvent>
 {
 	constructor(private readonly sender: WelcomeEmailSender) {}
 
-	async on(event: UserRegisteredDomainEvent): Promise<void> {
+	async on(event: ShopUserRegisteredDomainEvent): Promise<void> {
 		await this.sender.send(event.id, event.name, event.email);
 	}
 
 	subscribedTo(): DomainEventClass[] {
-		return [UserRegisteredDomainEvent];
+		return [ShopUserRegisteredDomainEvent];
 	}
 
 	name(): string {

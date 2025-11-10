@@ -1,8 +1,8 @@
 import { WelcomeEmailPrimitives } from "../../../../../src/contexts/retention/email/domain/WelcomeEmail";
 import { WelcomeEmailSentDomainEvent } from "../../../../../src/contexts/retention/email/domain/WelcomeEmailSentDomainEvent";
 import { EmailAddressMother } from "../../../shared/domain/EmailAddressMother";
-import { UserIdMother } from "../../../shop/users/domain/UserIdMother";
-import { UserNameMother } from "../../../shop/users/domain/UserNameMother";
+import { UserIdMother } from "../../../shop/shop-user/domain/ShopUserIdMother";
+import { UserNameMother } from "../../../shop/shop-user/domain/ShopUserNameMother";
 
 import { EmailBodyMother } from "./EmailBodyMother";
 import { EmailIdMother } from "./EmailIdMother";

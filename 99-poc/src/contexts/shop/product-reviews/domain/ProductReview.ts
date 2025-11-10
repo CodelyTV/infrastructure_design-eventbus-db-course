@@ -1,7 +1,7 @@
 import { ProductId } from "../../products/domain/ProductId";
-import { UserId } from "../../users/domain/UserId";
-import { UserName } from "../../users/domain/UserName";
-import { UserProfilePicture } from "../../users/domain/UserProfilePicture";
+import { ShopUserId } from "../../shop-user/domain/ShopUserId";
+import { ShopUserName } from "../../shop-user/domain/ShopUserName";
+import { ShopUserProfilePicture } from "../../shop-user/domain/ShopUserProfilePicture";
 
 import { ProductReviewComment } from "./ProductReviewComment";
 import { ProductReviewId } from "./ProductReviewId";
@@ -19,12 +19,12 @@ export type ProductReviewPrimitives = {
 
 export class ProductReview {
 	public readonly id: ProductReviewId;
-	public readonly userId: UserId;
+	public readonly userId: ShopUserId;
 	public readonly productId: ProductId;
 	public readonly rating: ProductReviewRating;
 	public readonly comment: ProductReviewComment;
-	public readonly userName: UserName;
-	public readonly userProfilePicture: UserProfilePicture;
+	public readonly userName: ShopUserName;
+	public readonly userProfilePicture: ShopUserProfilePicture;
 
 	constructor(
 		id: string,
@@ -36,12 +36,14 @@ export class ProductReview {
 		userProfilePicture: string,
 	) {
 		this.id = new ProductReviewId(id);
-		this.userId = new UserId(userId);
+		this.userId = new ShopUserId(userId);
 		this.productId = new ProductId(productId);
 		this.rating = new ProductReviewRating(rating);
 		this.comment = new ProductReviewComment(comment);
-		this.userName = new UserName(userName);
-		this.userProfilePicture = new UserProfilePicture(userProfilePicture);
+		this.userName = new ShopUserName(userName);
+		this.userProfilePicture = new ShopUserProfilePicture(
+			userProfilePicture,
+		);
 	}
 
 	static create(

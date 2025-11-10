@@ -2,8 +2,8 @@ import {
 	RetentionUser,
 	RetentionUserPrimitives,
 } from "../../../../../src/contexts/retention/user/domain/RetentionUser";
-import { DateMother } from "../../../shop/users/domain/DateMother";
-import { UserIdMother } from "../../../shop/users/domain/UserIdMother";
+import { DateMother } from "../../../shop/shop-user/domain/DateMother";
+import { UserIdMother } from "../../../shop/shop-user/domain/ShopUserIdMother";
 
 export class RetentionUserMother {
 	static create(params?: Partial<RetentionUserPrimitives>): RetentionUser {

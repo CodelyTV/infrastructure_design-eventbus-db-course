@@ -1,6 +1,6 @@
 import { Service } from "diod";
 
-import { UserId } from "../../../../shop/users/domain/UserId";
+import { ShopUserId } from "../../../../shop/shop-user/domain/ShopUserId";
 import { RetentionUserRepository } from "../../domain/RetentionUserRepository";
 
 @Service()
@@ -8,7 +8,7 @@ export class UserLastActivityUpdater {
 	constructor(private readonly repository: RetentionUserRepository) {}
 
 	async update(id: string, occurredOn: Date): Promise<void> {
-		const user = await this.repository.search(new UserId(id));
+		const user = await this.repository.search(new ShopUserId(id));
 
 		if (user === null) {
 			throw new Error(

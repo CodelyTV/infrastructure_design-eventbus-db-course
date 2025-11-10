@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 
 import { Course } from "../../../../../src/contexts/mooc/courses/domain/Course";
-import { DateMother } from "../../users/domain/DateMother";
+import { DateMother } from "../../../shop/shop-user/domain/DateMother";
 
 import { CourseIdMother } from "./CourseIdMother";
 

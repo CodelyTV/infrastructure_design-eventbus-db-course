@@ -4,15 +4,15 @@ import { container } from "../../../../../src/contexts/shared/infrastructure/dep
 import { PostgresConnection } from "../../../../../src/contexts/shared/infrastructure/postgres/PostgresConnection";
 import { PostgresProductReviewRepository } from "../../../../../src/contexts/shop/product-reviews/infrastructure/PostgresProductReviewRepository";
 import { PostgresProductRepository } from "../../../../../src/contexts/shop/products/infrastructure/PostgresProductRepository";
-import { PostgresUserRepository } from "../../../../../src/contexts/shop/users/infrastructure/PostgresUserRepository";
+import { PostgresShopUserRepository } from "../../../../../src/contexts/shop/shop-user/infrastructure/PostgresShopUserRepository";
 import { ProductIdMother } from "../../products/domain/ProductIdMother";
 import { ProductMother } from "../../products/domain/ProductMother";
-import { UserMother } from "../../users/domain/UserMother";
+import { ShopUserMother } from "../../shop-user/domain/ShopUserMother";
 import { ProductReviewMother } from "../domain/ProductReviewMother";
 
 const connection = container.get(PostgresConnection);
 const repository = container.get(PostgresProductReviewRepository);
-const userRepository = container.get(PostgresUserRepository);
+const userRepository = container.get(PostgresShopUserRepository);
 const productRepository = container.get(PostgresProductRepository);
 
 describe("PostgresProductReviewRepository should", () => {
@@ -39,8 +39,8 @@ describe("PostgresProductReviewRepository should", () => {
 	});
 
 	it("search reviews by product", async () => {
-		const user1 = UserMother.create();
-		const user2 = UserMother.create();
+		const user1 = ShopUserMother.create();
+		const user2 = ShopUserMother.create();
 		const product = ProductMother.create();
 
 		const review1 = ProductReviewMother.create({

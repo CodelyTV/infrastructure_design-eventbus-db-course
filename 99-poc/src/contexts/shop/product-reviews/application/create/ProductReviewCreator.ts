@@ -1,6 +1,6 @@
 import { Service } from "diod";
 
-import { UserFinder } from "../../../users/application/find/UserFinder";
+import { ShopUserFinder } from "../../../shop-user/application/find/ShopUserFinder";
 import { ProductReview } from "../../domain/ProductReview";
 import { ProductReviewRepository } from "../../domain/ProductReviewRepository";
 
@@ -8,7 +8,7 @@ import { ProductReviewRepository } from "../../domain/ProductReviewRepository";
 export class ProductReviewCreator {
 	constructor(
 		private readonly repository: ProductReviewRepository,
-		private readonly userFinder: UserFinder,
+		private readonly userFinder: ShopUserFinder,
 	) {}
 
 	async create(

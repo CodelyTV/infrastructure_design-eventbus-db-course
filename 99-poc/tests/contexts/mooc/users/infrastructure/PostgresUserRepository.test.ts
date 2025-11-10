@@ -3,8 +3,6 @@ import "reflect-metadata";
 import { PostgresUserRepository } from "../../../../../src/contexts/mooc/users/infrastructure/PostgresUserRepository";
 import { container } from "../../../../../src/contexts/shared/infrastructure/dependency-injection/diod.config";
 import { PostgresConnection } from "../../../../../src/contexts/shared/infrastructure/postgres/PostgresConnection";
-import { UserIdMother } from "../domain/UserIdMother";
-import { UserMother } from "../domain/UserMother";
 
 const connection = container.get(PostgresConnection);
 const repository = container.get(PostgresUserRepository);

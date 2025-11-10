@@ -1,5 +1,5 @@
 import { EmailAddress } from "../../../shared/domain/EmailAddress";
-import { UserId } from "../../../shop/users/domain/UserId";
+import { ShopUserId } from "../../../shop/shop-user/domain/ShopUserId";
 
 import { Email } from "./Email";
 import { EmailBody } from "./EmailBody";
@@ -23,7 +23,7 @@ export class WelcomeEmail extends Email {
 		from: EmailAddress,
 		to: EmailAddress,
 		body: EmailBody,
-		private readonly userId: UserId,
+		private readonly userId: ShopUserId,
 		private readonly userName: string,
 	) {
 		super(id, from, to, body);
@@ -43,7 +43,7 @@ export class WelcomeEmail extends Email {
 			from,
 			new EmailAddress(emailAddress),
 			body,
-			new UserId(userId),
+			new ShopUserId(userId),
 			name,
 		);
 
@@ -67,7 +67,7 @@ export class WelcomeEmail extends Email {
 			new EmailAddress(primitives.from),
 			new EmailAddress(primitives.to),
 			new EmailBody(primitives.body),
-			new UserId(primitives.userId),
+			new ShopUserId(primitives.userId),
 			primitives.userName,
 		);
 	}
