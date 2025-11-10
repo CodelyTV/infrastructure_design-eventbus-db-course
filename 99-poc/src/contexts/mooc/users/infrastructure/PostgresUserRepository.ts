@@ -10,7 +10,6 @@ type DatabaseUserRow = {
 	name: string;
 	bio: string;
 	email: string;
-	suggested_courses: string;
 };
 
 @Service()
@@ -22,25 +21,23 @@ export class PostgresUserRepository
 		const userPrimitives = user.toPrimitives();
 
 		await this.execute`
-			INSERT INTO mooc.users (id, name, bio, email, suggested_courses)
+			INSERT INTO mooc.users (id, name, bio, email)
 			VALUES (
 				${userPrimitives.id},
 				${userPrimitives.name},
 				${userPrimitives.bio},
-				${userPrimitives.email},
-				${userPrimitives.suggestedCourses}
+				${userPrimitives.email}
 			)
 			ON CONFLICT (id) DO UPDATE SET
 				name = EXCLUDED.name,
 				bio = EXCLUDED.bio,
-				email = EXCLUDED.email,
-				suggested_courses = EXCLUDED.suggested_courses;
+				email = EXCLUDED.email;
 		`;
 	}
 
 	async search(id: UserId): Promise<User | null> {
 		return await this.searchOne`
-			SELECT id, name, bio, email, suggested_courses
+			SELECT id, name, bio, email
 			FROM mooc.users
 			WHERE id = ${id.value};
 		`;
@@ -52,7 +49,6 @@ export class PostgresUserRepository
 			name: row.name,
 			bio: row.bio,
 			email: row.email,
-			suggestedCourses: row.suggested_courses,
 		});
 	}
 }

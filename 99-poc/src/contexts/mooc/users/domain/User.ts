@@ -14,20 +14,16 @@ export class User extends AggregateRoot {
 		public readonly name: UserName,
 		public readonly bio: UserBio,
 		public email: UserEmail,
-		public suggestedCourses: string,
 	) {
 		super();
 	}
 
 	static create(id: string, name: string, bio: string, email: string): User {
-		const defaultSuggestedCourses = "";
-
 		const user = new User(
 			new UserId(id),
 			new UserName(name),
 			new UserBio(bio),
 			new UserEmail(email),
-			defaultSuggestedCourses,
 		);
 
 		user.record(new UserRegisteredDomainEvent(id, name, bio, email));
@@ -41,7 +37,6 @@ export class User extends AggregateRoot {
 			new UserName(primitives.name),
 			new UserBio(primitives.bio),
 			new UserEmail(primitives.email),
-			primitives.suggestedCourses,
 		);
 	}
 
@@ -51,11 +46,6 @@ export class User extends AggregateRoot {
 			name: this.name.value,
 			bio: this.bio.value,
 			email: this.email.value,
-			suggestedCourses: this.suggestedCourses,
 		};
-	}
-
-	updateSuggestedCourses(suggestedCourses: string): void {
-		this.suggestedCourses = suggestedCourses;
 	}
 }

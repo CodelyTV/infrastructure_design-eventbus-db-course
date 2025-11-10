@@ -14,7 +14,6 @@ export class UserMother {
 			name: UserNameMother.create().value,
 			bio: UserBioMother.create().value,
 			email: UserEmailMother.create().value,
-			suggestedCourses: "",
 			...params,
 		};
 
