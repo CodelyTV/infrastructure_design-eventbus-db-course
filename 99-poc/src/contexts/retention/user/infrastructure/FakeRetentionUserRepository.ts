@@ -1,6 +1,6 @@
 import { Service } from "diod";
 
-import { ShopUserId } from "../../../shop/shop-user/domain/ShopUserId";
+import { UserId } from "../../../shared/domain/UserId";
 import { RetentionUser } from "../domain/RetentionUser";
 import { RetentionUserRepository } from "../domain/RetentionUserRepository";
 
@@ -10,7 +10,7 @@ export class FakeRetentionUserRepository extends RetentionUserRepository {
 		return Promise.resolve();
 	}
 
-	async search(_id: ShopUserId): Promise<RetentionUser | null> {
+	async search(_id: UserId): Promise<RetentionUser | null> {
 		return Promise.resolve(null);
 	}
 }
