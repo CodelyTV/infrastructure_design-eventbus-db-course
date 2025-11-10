@@ -27,9 +27,11 @@ describe("PostgresProductRepository should", () => {
 
 	it("update an existing product when saving with the same id", async () => {
 		const originalProduct = ProductMother.create();
+
 		const newName = ProductNameMother.create();
+
 		const updatedProduct = ProductMother.create({
-			id: originalProduct.id.value,
+			...originalProduct.toPrimitives(),
 			name: newName.value,
 		});
 

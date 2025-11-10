@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { container } from "../../../../../src/contexts/shared/infrastructure/dependency-injection/diod.config";
 import { PostgresConnection } from "../../../../../src/contexts/shared/infrastructure/postgres/PostgresConnection";
 import { PostgresUserRepository } from "../../../../../src/contexts/shop/users/infrastructure/PostgresUserRepository";
+import { UserEmailMother } from "../domain/UserEmailMother";
 import { UserIdMother } from "../domain/UserIdMother";
 import { UserMother } from "../domain/UserMother";
 
@@ -24,6 +25,24 @@ describe("PostgresUserRepository should", () => {
 		await repository.save(user);
 	});
 
+	it("update an existing user when saving with the same id", async () => {
+		const originalUser = UserMother.create();
+
+		const newEmail = UserEmailMother.create();
+
+		const updatedUser = UserMother.create({
+			...originalUser.toPrimitives(),
+			email: newEmail.value,
+		});
+
+		await repository.save(originalUser);
+		await repository.save(updatedUser);
+
+		const searchedUser = await repository.search(originalUser.id);
+
+		expect(searchedUser).toStrictEqual(updatedUser);
+	});
+
 	it("return null searching a non existing user", async () => {
 		const userId = UserIdMother.create();
 
@@ -36,21 +55,5 @@ describe("PostgresUserRepository should", () => {
 		await repository.save(user);
 
 		expect(await repository.search(user.id)).toStrictEqual(user);
-	});
-
-	it("update an existing user when saving with the same id", async () => {
-		const userId = UserIdMother.create();
-		const originalUser = UserMother.create({ id: userId.value });
-		const updatedUser = UserMother.create({
-			id: userId.value,
-			email: "updated@example.com",
-		});
-
-		await repository.save(originalUser);
-		await repository.save(updatedUser);
-
-		const searchedUser = await repository.search(userId);
-
-		expect(searchedUser).toStrictEqual(updatedUser);
 	});
 });
