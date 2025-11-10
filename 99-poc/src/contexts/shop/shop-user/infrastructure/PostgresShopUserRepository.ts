@@ -4,13 +4,11 @@ import { PostgresRepository } from "../../../shared/infrastructure/postgres/Post
 import { ShopUser } from "../domain/ShopUser";
 import { ShopUserId } from "../domain/ShopUserId";
 import { ShopUserRepository } from "../domain/ShopUserRepository";
-import { ShopUserStatus } from "../domain/ShopUserStatus";
 
 type DatabaseShopUserRow = {
 	id: string;
 	name: string;
 	email: string;
-	profile_picture: string;
 };
 
 @Service()
@@ -22,23 +20,21 @@ export class PostgresShopUserRepository
 		const userPrimitives = user.toPrimitives();
 
 		await this.execute`
-			INSERT INTO shop.users (id, name, email, profile_picture)
+			INSERT INTO shop.users (id, name, email)
 			VALUES (
 				${userPrimitives.id},
 				${userPrimitives.name},
-				${userPrimitives.email},
-				${userPrimitives.profilePicture}
+				${userPrimitives.email}
 			)
 			ON CONFLICT (id) DO UPDATE SET
 				name = EXCLUDED.name,
-				email = EXCLUDED.email,
-				profile_picture = EXCLUDED.profile_picture;
+				email = EXCLUDED.email;
 		`;
 	}
 
 	async search(id: ShopUserId): Promise<ShopUser | null> {
 		return await this.searchOne`
-			SELECT id, name, email, profile_picture
+			SELECT id, name, email
 			FROM shop.users
 			WHERE id = ${id.value};
 		`;
@@ -49,8 +45,6 @@ export class PostgresShopUserRepository
 			id: row.id,
 			name: row.name,
 			email: row.email,
-			profilePicture: row.profile_picture,
-			status: ShopUserStatus.Active,
 		});
 	}
 }

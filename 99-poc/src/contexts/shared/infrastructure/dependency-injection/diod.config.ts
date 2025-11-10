@@ -13,6 +13,14 @@ import { UserRegistrar } from "../../../mooc/users/application/registrar/UserReg
 import { DomainUserFinder } from "../../../mooc/users/domain/DomainUserFinder";
 import { UserRepository } from "../../../mooc/users/domain/UserRepository";
 import { PostgresUserRepository } from "../../../mooc/users/infrastructure/PostgresUserRepository";
+import { SendWelcomeEmailOnUserRegistered } from "../../../retention/email/application/send-welcome-email/SendWelcomeEmailOnUserRegistered";
+import { WelcomeEmailSender } from "../../../retention/email/application/send-welcome-email/WelcomeEmailSender";
+import { EmailSender } from "../../../retention/email/domain/EmailSender";
+import { FakeEmailSender } from "../../../retention/email/infrastructure/FakeEmailSender";
+import { UpdateLastActivityDateOnUserUpdated } from "../../../retention/user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
+import { UserLastActivityUpdater } from "../../../retention/user/application/update-last-activity-date/UserLastActivityUpdater";
+import { RetentionUserRepository } from "../../../retention/user/domain/RetentionUserRepository";
+import { FakeRetentionUserRepository } from "../../../retention/user/infrastructure/FakeRetentionUserRepository";
 import { ProductReviewCreator } from "../../../shop/product-reviews/application/create/ProductReviewCreator";
 import { ProductReviewsByProductSearcher } from "../../../shop/product-reviews/application/search-by-product-id/ProductReviewsByProductSearcher";
 import { ProductReviewRepository } from "../../../shop/product-reviews/domain/ProductReviewRepository";
@@ -22,12 +30,15 @@ import { AllProductsSearcher } from "../../../shop/products/application/search-a
 import { ProductRepository } from "../../../shop/products/domain/ProductRepository";
 import { PostgresProductRepository } from "../../../shop/products/infrastructure/PostgresProductRepository";
 import { ShopUserFinder } from "../../../shop/shop-user/application/find/ShopUserFinder";
-import { ShopUserRegistrar } from "../../../shop/shop-user/application/registrar/ShopUserRegistrar";
+import { RegisterShopUserOnUserRegistered } from "../../../shop/shop-user/application/register-on-user-registered/RegisterShopUserOnUserRegistered";
+import { ShopUserRegistrar } from "../../../shop/shop-user/application/register-on-user-registered/ShopUserRegistrar";
 import { ShopUserSearcher } from "../../../shop/shop-user/application/search/ShopUserSearcher";
 import { ShopUserRepository } from "../../../shop/shop-user/domain/ShopUserRepository";
 import { PostgresShopUserRepository } from "../../../shop/shop-user/infrastructure/PostgresShopUserRepository";
 import { EventBus } from "../../domain/event/EventBus";
+import { UuidGenerator } from "../../domain/UuidGenerator";
 import { InMemoryEventBus } from "../domain-event/InMemoryEventBus";
+import { NativeUuidGenerator } from "../NativeUuidGenerator";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
 const builder = new ContainerBuilder();
@@ -47,6 +58,8 @@ builder
 	.asSingleton();
 
 builder.register(EventBus).use(InMemoryEventBus);
+builder.register(UuidGenerator).use(NativeUuidGenerator);
+builder.register(EmailSender).use(FakeEmailSender);
 
 // Mooc - User
 builder.register(UserRepository).use(PostgresUserRepository);
@@ -66,9 +79,10 @@ builder.registerAndUse(AllCoursesSearcher);
 // Shop - User
 builder.register(ShopUserRepository).use(PostgresShopUserRepository);
 builder.registerAndUse(PostgresShopUserRepository);
-builder.registerAndUse(ShopUserRegistrar);
 builder.registerAndUse(ShopUserFinder);
 builder.registerAndUse(ShopUserSearcher);
+builder.registerAndUse(ShopUserRegistrar);
+builder.registerAndUse(RegisterShopUserOnUserRegistered).addTag("subscriber");
 
 // Shop - Product
 builder.register(ProductRepository).use(PostgresProductRepository);
@@ -81,6 +95,18 @@ builder.register(ProductReviewRepository).use(PostgresProductReviewRepository);
 builder.registerAndUse(PostgresProductReviewRepository);
 builder.registerAndUse(ProductReviewCreator);
 builder.registerAndUse(ProductReviewsByProductSearcher);
+
+// Retention - User
+builder.register(RetentionUserRepository).use(FakeRetentionUserRepository);
+builder.registerAndUse(FakeRetentionUserRepository);
+builder.registerAndUse(UserLastActivityUpdater);
+builder
+	.registerAndUse(UpdateLastActivityDateOnUserUpdated)
+	.addTag("subscriber");
+
+// Retention - Email
+builder.registerAndUse(WelcomeEmailSender);
+builder.registerAndUse(SendWelcomeEmailOnUserRegistered).addTag("subscriber");
 
 // Export container
 export const container = builder.build();

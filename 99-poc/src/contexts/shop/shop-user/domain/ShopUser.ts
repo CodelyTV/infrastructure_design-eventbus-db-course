@@ -5,32 +5,21 @@ import { AggregateRoot } from "../../../shared/domain/AggregateRoot";
 import { ShopUserEmail } from "./ShopUserEmail";
 import { ShopUserId } from "./ShopUserId";
 import { ShopUserName } from "./ShopUserName";
-import { ShopUserProfilePicture } from "./ShopUserProfilePicture";
-import { ShopUserStatus } from "./ShopUserStatus";
 
 export class ShopUser extends AggregateRoot {
 	private constructor(
 		public readonly id: ShopUserId,
 		public readonly name: ShopUserName,
 		public email: ShopUserEmail,
-		public readonly profilePicture: ShopUserProfilePicture,
-		public status: ShopUserStatus,
 	) {
 		super();
 	}
 
-	static create(
-		id: string,
-		name: string,
-		email: string,
-		profilePicture: string,
-	): ShopUser {
+	static create(id: string, name: string, email: string): ShopUser {
 		return new ShopUser(
 			new ShopUserId(id),
 			new ShopUserName(name),
 			new ShopUserEmail(email),
-			new ShopUserProfilePicture(profilePicture),
-			ShopUserStatus.Active,
 		);
 	}
 
@@ -39,8 +28,6 @@ export class ShopUser extends AggregateRoot {
 			new ShopUserId(primitives.id),
 			new ShopUserName(primitives.name),
 			new ShopUserEmail(primitives.email),
-			new ShopUserProfilePicture(primitives.profilePicture),
-			primitives.status as ShopUserStatus,
 		);
 	}
 
@@ -49,8 +36,6 @@ export class ShopUser extends AggregateRoot {
 			id: this.id.value,
 			name: this.name.value,
 			email: this.email.value,
-			profilePicture: this.profilePicture.value,
-			status: this.status,
 		};
 	}
 

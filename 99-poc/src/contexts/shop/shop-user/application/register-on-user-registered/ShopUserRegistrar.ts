@@ -7,13 +7,8 @@ import { ShopUserRepository } from "../../domain/ShopUserRepository";
 export class ShopUserRegistrar {
 	constructor(private readonly repository: ShopUserRepository) {}
 
-	async registrar(
-		id: string,
-		name: string,
-		email: string,
-		profilePicture: string,
-	): Promise<void> {
-		const user = ShopUser.create(id, name, email, profilePicture);
+	async register(id: string, name: string, email: string): Promise<void> {
+		const user = ShopUser.create(id, name, email);
 
 		await this.repository.save(user);
 	}
