@@ -3,7 +3,6 @@ import postgres from "postgres";
 
 import { PostgresConnection } from "../../../shared/infrastructure/postgres/PostgresConnection";
 import { Product } from "../domain/Product";
-import { ProductFeaturedReviewPrimitives } from "../domain/ProductFeaturedReview";
 import { ProductId } from "../domain/ProductId";
 import { ProductRepository } from "../domain/ProductRepository";
 
@@ -13,8 +12,6 @@ type DatabaseProductRow = {
 	price_amount: number;
 	price_currency: "EUR" | "USD";
 	image_urls: string[];
-	featured_review: ProductFeaturedReviewPrimitives | null;
-	rating: number;
 };
 
 @Service()
@@ -25,6 +22,28 @@ export class PostgresProductRepository implements ProductRepository {
 		this.sql = connection.sql;
 	}
 
+	async save(product: Product): Promise<void> {
+		const primitives = product.toPrimitives();
+
+		await this.sql`
+			INSERT INTO shop.products (id, name, price_amount, price_currency, image_urls, views, creation_date)
+			VALUES (
+				${primitives.id},
+				${primitives.name},
+				${primitives.price.amount},
+				${primitives.price.currency},
+				${this.sql.json(primitives.imageUrls)},
+				0,
+				NOW()
+			)
+			ON CONFLICT (id) DO UPDATE SET
+				name = EXCLUDED.name,
+				price_amount = EXCLUDED.price_amount,
+				price_currency = EXCLUDED.price_currency,
+				image_urls = EXCLUDED.image_urls;
+		`;
+	}
+
 	async search(id: ProductId): Promise<Product | null> {
 		const result = await this.sql<DatabaseProductRow[]>`
 			SELECT
@@ -32,10 +51,8 @@ export class PostgresProductRepository implements ProductRepository {
 				name,
 				price_amount,
 				price_currency,
-				image_urls,
-				featured_review,
-				rating
-			FROM shop.products_view
+				image_urls
+			FROM shop.products
 			WHERE id = ${id.value};
 		`;
 
@@ -49,10 +66,8 @@ export class PostgresProductRepository implements ProductRepository {
 				name,
 				price_amount,
 				price_currency,
-				image_urls,
-				featured_review,
-				rating
-			FROM shop.products_view;
+				image_urls
+			FROM shop.products;
 		`;
 
 		return result.map((row) => this.toProduct(row));
@@ -63,12 +78,10 @@ export class PostgresProductRepository implements ProductRepository {
 			row.id,
 			row.name,
 			{
-				amount: row.price_amount,
+				amount: parseFloat(String(row.price_amount)),
 				currency: row.price_currency,
 			},
 			row.image_urls,
-			row.featured_review,
-			row.rating,
 		);
 	}
 }

@@ -1,13 +1,8 @@
 import { Money } from "../../../shared/domain/Money";
 
-import {
-	ProductFeaturedReview,
-	ProductFeaturedReviewPrimitives,
-} from "./ProductFeaturedReview";
 import { ProductId } from "./ProductId";
 import { ProductImageUrls } from "./ProductImageUrls";
 import { ProductName } from "./ProductName";
-import { ProductRating } from "./ProductRating";
 
 export type ProductPrimitives = {
 	id: string;
@@ -17,11 +12,6 @@ export type ProductPrimitives = {
 		currency: "EUR" | "USD";
 	};
 	imageUrls: string[];
-	featuredReview: {
-		comment: string;
-		rating: number;
-	} | null;
-	rating: number | null;
 };
 
 export class Product {
@@ -29,25 +19,12 @@ export class Product {
 	public readonly name: ProductName;
 	public readonly price: Money;
 	public readonly imageUrls: ProductImageUrls;
-	public readonly featuredReview?: ProductFeaturedReview | null;
-	public readonly rating?: ProductRating | null;
 
-	constructor(
-		id: string,
-		name: string,
-		price: Money,
-		imageUrls: string[],
-		featuredReview?: ProductFeaturedReviewPrimitives | null,
-		rating?: number | null,
-	) {
+	constructor(id: string, name: string, price: Money, imageUrls: string[]) {
 		this.id = new ProductId(id);
 		this.name = new ProductName(name);
 		this.price = price;
 		this.imageUrls = ProductImageUrls.fromPrimitives(imageUrls);
-		this.featuredReview = featuredReview
-			? ProductFeaturedReview.fromPrimitives(featuredReview)
-			: null;
-		this.rating = rating ? new ProductRating(rating) : null;
 	}
 
 	static create(
@@ -68,10 +45,6 @@ export class Product {
 				currency: this.price.currency,
 			},
 			imageUrls: this.imageUrls.toPrimitives(),
-			featuredReview: this.featuredReview
-				? this.featuredReview.toPrimitives()
-				: null,
-			rating: this.rating ? this.rating.value : null,
 		};
 	}
 }
