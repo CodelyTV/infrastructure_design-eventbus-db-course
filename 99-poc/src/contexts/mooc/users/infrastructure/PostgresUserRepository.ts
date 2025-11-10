@@ -1,8 +1,8 @@
 import { Service } from "diod";
 
+import { UserId } from "../../../shared/domain/UserId";
 import { PostgresRepository } from "../../../shared/infrastructure/postgres/PostgresRepository";
 import { User } from "../domain/User";
-import { UserId } from "../domain/UserId";
 import { UserRepository } from "../domain/UserRepository";
 
 type DatabaseUserRow = {

@@ -1,6 +1,6 @@
 import { User } from "../../../../../src/contexts/mooc/users/domain/User";
-import { UserId } from "../../../../../src/contexts/mooc/users/domain/UserId";
 import { UserRepository } from "../../../../../src/contexts/mooc/users/domain/UserRepository";
+import { UserId } from "../../../../../src/contexts/shared/domain/UserId";
 
 export class MockUserRepository implements UserRepository {
 	private readonly mockSave = jest.fn();

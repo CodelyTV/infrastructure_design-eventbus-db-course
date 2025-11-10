@@ -1,10 +1,10 @@
 import { Primitives } from "@codelytv/primitives-type";
 
 import { AggregateRoot } from "../../../shared/domain/AggregateRoot";
+import { UserId } from "../../../shared/domain/UserId";
 
 import { UserBio } from "./UserBio";
 import { UserEmail } from "./UserEmail";
-import { UserId } from "./UserId";
 import { UserName } from "./UserName";
 import { UserRegisteredDomainEvent } from "./UserRegisteredDomainEvent";
 

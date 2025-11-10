@@ -1,5 +1,6 @@
+import { UserId } from "../../../shared/domain/UserId";
+
 import { User } from "./User";
-import { UserId } from "./UserId";
 
 export abstract class UserRepository {
 	abstract save(user: User): Promise<void>;

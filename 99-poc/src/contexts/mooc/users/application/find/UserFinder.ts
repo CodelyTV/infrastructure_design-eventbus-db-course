@@ -1,9 +1,9 @@
 import { Primitives } from "@codelytv/primitives-type";
 import { Service } from "diod";
 
+import { UserId } from "../../../../shared/domain/UserId";
 import { User } from "../../domain/User";
 import { UserDoesNotExistError } from "../../domain/UserDoesNotExistError";
-import { UserId } from "../../domain/UserId";
 import { UserRepository } from "../../domain/UserRepository";
 
 export type UserFinderErrors = UserDoesNotExistError;
