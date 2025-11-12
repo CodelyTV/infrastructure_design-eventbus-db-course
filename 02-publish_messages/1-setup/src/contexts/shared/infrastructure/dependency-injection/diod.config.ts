@@ -38,6 +38,7 @@ import { PostgresShopUserRepository } from "../../../shop/shop-user/infrastructu
 import { EventBus } from "../../domain/event/EventBus";
 import { UuidGenerator } from "../../domain/UuidGenerator";
 import { InMemoryEventBus } from "../domain-event/InMemoryEventBus";
+import { PostgresEventBus } from "../domain-event/PostgresEventBus";
 import { NativeUuidGenerator } from "../NativeUuidGenerator";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
@@ -58,6 +59,7 @@ builder
 	.asSingleton();
 
 builder.register(EventBus).use(InMemoryEventBus);
+builder.registerAndUse(PostgresEventBus);
 builder.register(UuidGenerator).use(NativeUuidGenerator);
 builder.register(EmailSender).use(FakeEmailSender);
 
