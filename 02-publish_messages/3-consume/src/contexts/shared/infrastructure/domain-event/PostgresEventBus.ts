@@ -41,8 +41,6 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async searchEventsToConsume(limit: number): Promise<DomainEvent[]> {
-		const eventMapper = this.eventMapper();
-
 		const rows = await this.connection.sql<
 			{
 				id: string;
@@ -64,7 +62,7 @@ export class PostgresEventBus implements EventBus {
 
 		return rows
 			.map((row) =>
-				eventMapper.searchEvent(
+				this.eventMapper().searchEvent(
 					row.id,
 					row.name,
 					row.attributes,

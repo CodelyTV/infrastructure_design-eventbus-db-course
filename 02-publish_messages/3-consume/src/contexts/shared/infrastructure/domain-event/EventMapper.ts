@@ -1,31 +1,15 @@
-import {
-	DomainEvent,
-	DomainEventAttributes,
-} from "../../domain/event/DomainEvent";
+import { DomainEvent } from "../../domain/event/DomainEvent";
 import { DomainEventClass } from "../../domain/event/DomainEventClass";
 import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 
-type DomainEventClassWithFactory<T extends DomainEvent = DomainEvent> =
-	DomainEventClass<T> & {
-		fromPrimitives(
-			aggregateId: string,
-			eventId: string,
-			occurredAt: Date,
-			attributes: DomainEventAttributes,
-		): T;
-	};
-
 export class EventMapper {
-	private readonly eventMap: Map<string, DomainEventClassWithFactory>;
+	private readonly eventMap: Map<string, DomainEventClass>;
 
 	constructor(eventClasses: DomainEventClass[]) {
 		this.eventMap = new Map();
 
 		for (const eventClass of eventClasses) {
-			this.eventMap.set(
-				eventClass.eventName,
-				eventClass as DomainEventClassWithFactory,
-			);
+			this.eventMap.set(eventClass.eventName, eventClass);
 		}
 	}
 
