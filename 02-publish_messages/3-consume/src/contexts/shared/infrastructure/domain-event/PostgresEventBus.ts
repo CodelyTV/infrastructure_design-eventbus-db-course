@@ -7,10 +7,12 @@ import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
+import { DomainEventSubscriptionsMapper } from "./DomainEventSubscriptionsMapper";
 import { EventMapper } from "./EventMapper";
 
 export class PostgresEventBus implements EventBus {
 	private eventMapperCache?: EventMapper;
+	private subscriptionMapperCache?: DomainEventSubscriptionsMapper;
 
 	constructor(
 		private readonly connection: PostgresConnection,
@@ -27,15 +29,10 @@ export class PostgresEventBus implements EventBus {
 
 	async consume(limit: number): Promise<void> {
 		await this.connection.sql.begin(async (tx) => {
-			const eventsToConsume: DomainEvent[] =
-				await this.searchEventsToConsume(limit);
-
-			if (eventsToConsume.length === 0) {
-				return;
-			}
+			const eventsToConsume = await this.searchEventsToConsume(limit);
 
 			for (const event of eventsToConsume) {
-				await this.executeSubscribersFor(event, tx);
+				await this.executeEventSubscribers(event, tx);
 			}
 		});
 	}
@@ -104,16 +101,23 @@ export class PostgresEventBus implements EventBus {
 		return this.eventMapperCache;
 	}
 
-	private async executeSubscribersFor(
+	private subscriptionsMapper(): DomainEventSubscriptionsMapper {
+		this.subscriptionMapperCache ??= new DomainEventSubscriptionsMapper(
+			this.eventSubscribersGetter(),
+		);
+
+		return this.subscriptionMapperCache;
+	}
+
+	private async executeEventSubscribers(
 		event: DomainEvent,
 		tx: TransactionSql,
 	): Promise<void> {
-		const subscribers = this.eventSubscribersGetter();
-		const subscriptions = this.buildSubscriptions(subscribers);
+		const eventSubscribers = this.subscriptionsMapper().searchSubscribers(
+			event.eventName,
+		);
 
-		const eventSubscribers = subscriptions.get(event.eventName);
-
-		if (eventSubscribers && eventSubscribers.length > 0) {
+		if (eventSubscribers.length > 0) {
 			const executions = eventSubscribers.map((sub) =>
 				sub.subscriber(event),
 			);
@@ -133,43 +137,5 @@ export class PostgresEventBus implements EventBus {
 			DELETE FROM public.domain_events_to_consume
 			WHERE id = ${event.eventId}
 		`;
-	}
-
-	private buildSubscriptions(
-		subscribers: DomainEventSubscriber<DomainEvent>[],
-	): Map<
-		string,
-		{ subscriber: (event: DomainEvent) => Promise<void>; name: string }[]
-	> {
-		const subscriptions = new Map<
-			string,
-			{
-				subscriber: (event: DomainEvent) => Promise<void>;
-				name: string;
-			}[]
-		>();
-
-		for (const subscriber of subscribers) {
-			for (const event of subscriber.subscribedTo()) {
-				const currentSubscriptions =
-					subscriptions.get(event.eventName) ?? [];
-
-				const subscription = {
-					subscriber: subscriber.on.bind(subscriber),
-					name: subscriber.name(),
-				};
-
-				const isDuplicate = currentSubscriptions.some(
-					(sub) => sub.name === subscription.name,
-				);
-
-				if (!isDuplicate) {
-					currentSubscriptions.push(subscription);
-					subscriptions.set(event.eventName, currentSubscriptions);
-				}
-			}
-		}
-
-		return subscriptions;
 	}
 }
