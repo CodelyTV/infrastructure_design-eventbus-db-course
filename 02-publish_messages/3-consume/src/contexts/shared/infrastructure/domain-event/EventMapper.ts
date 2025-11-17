@@ -20,16 +20,7 @@ export class EventMapper {
 			subscriber.subscribedTo(),
 		);
 
-		const uniqueEventClasses = Array.from(
-			new Map(
-				eventClasses.map((eventClass) => [
-					eventClass.eventName,
-					eventClass,
-				]),
-			).values(),
-		);
-
-		return new EventMapper(uniqueEventClasses);
+		return new EventMapper(eventClasses);
 	}
 
 	searchEvent(
@@ -44,10 +35,8 @@ export class EventMapper {
 			return null;
 		}
 
-		const aggregateId = attributes.id as string;
-
 		return EventClass.fromPrimitives(
-			aggregateId,
+			attributes.id as string,
 			id,
 			occurredAt,
 			attributes,
