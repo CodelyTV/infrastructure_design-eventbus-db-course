@@ -6,6 +6,8 @@ import { User } from "../../domain/User";
 import { UserAlreadyExistError } from "../../domain/UserAlreadyExistError";
 import { UserRepository } from "../../domain/UserRepository";
 
+export type UserRegistrarErrors = UserAlreadyExistError;
+
 @Service()
 export class UserRegistrar {
 	constructor(
