@@ -1,5 +1,5 @@
 import { Service } from "diod";
-import postgres, { JSONValue, Row } from "postgres";
+import { JSONValue, Row, TransactionSql } from "postgres";
 
 import { DomainEvent } from "../../domain/event/DomainEvent";
 import { EventBus } from "../../domain/event/EventBus";
@@ -23,7 +23,7 @@ export class PostgresEventBus implements EventBus {
 
 	private async insertEvent(
 		event: DomainEvent,
-		tx: postgres.Sql,
+		tx: TransactionSql,
 	): Promise<Row[]> {
 		return tx`
 			INSERT INTO public.domain_events_to_consume
