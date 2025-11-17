@@ -1,13 +1,11 @@
 import { DomainEvent } from "../../domain/event/DomainEvent";
 import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 
-export type Subscriber = {
-	subscriber: (event: DomainEvent) => Promise<void>;
-	name: string;
-};
-
 export class DomainEventSubscriptionsMapper {
-	private readonly subscriptionMap: Map<string, Subscriber[]>;
+	private readonly subscriptionMap: Map<
+		string,
+		DomainEventSubscriber<DomainEvent>[]
+	>;
 
 	constructor(subscribers: DomainEventSubscriber<DomainEvent>[]) {
 		this.subscriptionMap = new Map();
@@ -17,17 +15,12 @@ export class DomainEventSubscriptionsMapper {
 				const currentSubscriptions =
 					this.subscriptionMap.get(event.eventName) ?? [];
 
-				const subscription = {
-					subscriber: subscriber.on.bind(subscriber),
-					name: subscriber.name(),
-				};
-
 				const isDuplicate = currentSubscriptions.some(
-					(sub) => sub.name === subscription.name,
+					(sub) => sub.name() === subscriber.name(),
 				);
 
 				if (!isDuplicate) {
-					currentSubscriptions.push(subscription);
+					currentSubscriptions.push(subscriber);
 					this.subscriptionMap.set(
 						event.eventName,
 						currentSubscriptions,
@@ -37,7 +30,7 @@ export class DomainEventSubscriptionsMapper {
 		}
 	}
 
-	searchSubscribers(eventName: string): Subscriber[] {
+	searchSubscribers(eventName: string): DomainEventSubscriber<DomainEvent>[] {
 		return this.subscriptionMap.get(eventName) ?? [];
 	}
 }

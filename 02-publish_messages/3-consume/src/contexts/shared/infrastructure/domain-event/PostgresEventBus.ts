@@ -7,10 +7,7 @@ import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
-import {
-	DomainEventSubscriptionsMapper,
-	Subscriber,
-} from "./DomainEventSubscriptionsMapper";
+import { DomainEventSubscriptionsMapper } from "./DomainEventSubscriptionsMapper";
 import { EventMapper } from "./EventMapper";
 
 export class PostgresEventBus implements EventBus {
@@ -131,14 +128,14 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async executeEventSubscriber(
-		subscription: Subscriber,
+		subscription: DomainEventSubscriber<DomainEvent>,
 		event: DomainEvent,
 	): Promise<void> {
 		try {
-			await subscription.subscriber(event);
+			await subscription.on(event);
 		} catch (error) {
 			console.error(
-				`❌ Error executing subscriber ${subscription.name} for ${event.eventName}:`,
+				`❌ Error executing subscriber ${subscription.name()} for ${event.eventName}:`,
 				error,
 			);
 		}
