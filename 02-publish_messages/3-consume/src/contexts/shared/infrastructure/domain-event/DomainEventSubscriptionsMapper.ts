@@ -15,11 +15,11 @@ export class DomainEventSubscriptionsMapper {
 				const currentSubscriptions =
 					this.subscriptionMap.get(event.eventName) ?? [];
 
-				const isDuplicate = currentSubscriptions.some(
+				const hasSubscriberAlreadyBeenAdded = currentSubscriptions.some(
 					(sub) => sub.name() === subscriber.name(),
 				);
 
-				if (!isDuplicate) {
+				if (!hasSubscriberAlreadyBeenAdded) {
 					currentSubscriptions.push(subscriber);
 					this.subscriptionMap.set(
 						event.eventName,
