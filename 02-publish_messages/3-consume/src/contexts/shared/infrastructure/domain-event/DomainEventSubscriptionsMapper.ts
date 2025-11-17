@@ -1,9 +1,11 @@
 import { DomainEvent } from "../../domain/event/DomainEvent";
 import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 
+type EventName = string;
+
 export class DomainEventSubscriptionsMapper {
 	private readonly subscriptionMap: Map<
-		string,
+		EventName,
 		DomainEventSubscriber<DomainEvent>[]
 	>;
 
