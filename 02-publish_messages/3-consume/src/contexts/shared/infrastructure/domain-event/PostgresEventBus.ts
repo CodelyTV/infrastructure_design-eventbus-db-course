@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-await-in-loop */
 import { JSONValue, Row, TransactionSql } from "postgres";
 
 import { DomainEvent } from "../../domain/event/DomainEvent";
@@ -24,78 +24,77 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	async consume(limit: number): Promise<void> {
-		const subscribers = this.eventSubscribersGetter();
-		const subscriptions = this.buildSubscriptions(subscribers);
-		const eventMapper = this.buildEventMapper(subscribers);
-
 		await this.connection.sql.begin(async (tx) => {
-			const rows = await tx<
-				{
-					id: string;
-					name: string;
-					attributes: Record<string, unknown>;
-					occurred_at: Date;
-				}[]
-			>`
-				SELECT id, name, attributes, occurred_at
-				FROM public.domain_events_to_consume
-				ORDER BY inserted_at ASC
-				LIMIT ${limit}
-				FOR UPDATE SKIP LOCKED
-			`;
+			const eventsToConsume: DomainEvent[] =
+				await this.searchEventsToConsume(limit);
 
-			if (rows.length === 0) {
-				console.log("No hay eventos para consumir");
-
+			if (eventsToConsume.length === 0) {
 				return;
 			}
 
-			console.log(`\n📦 Consumiendo ${rows.length} evento(s)...\n`);
-
-			for (const row of rows) {
-				const event = eventMapper.fromDatabase(row);
-
-				if (!event) {
-					console.log(
-						`⚠️  Evento desconocido: ${row.name} (ID: ${row.id})`,
-					);
-					continue;
-				}
-
-				console.log(
-					`📤 Procesando evento \`${event.eventName}\` para:`,
-				);
-
-				const eventSubscribers = subscriptions.get(event.eventName);
-
-				if (eventSubscribers && eventSubscribers.length > 0) {
-					const executions = eventSubscribers.map((sub) => {
-						console.log(`\t→ 💻 ${sub.name}`);
-
-						return sub.subscriber(event);
-					});
-
-					try {
-						// eslint-disable-next-line no-await-in-loop
-						await Promise.all(executions);
-					} catch (error) {
-						console.error(
-							`❌ Error ejecutando subscribers para ${event.eventName}:`,
-							error,
-						);
-						throw error;
-					}
-				}
-
-				// eslint-disable-next-line no-await-in-loop
-				await tx`
-					DELETE FROM public.domain_events_to_consume
-					WHERE id = ${row.id}
-				`;
-
-				console.log(`✅ Evento ${row.id} consumido y eliminado\n`);
+			for (const event of eventsToConsume) {
+				await this.executeSubscribersFor(event, tx);
 			}
 		});
+	}
+
+	private async searchEventsToConsume(limit: number): Promise<DomainEvent[]> {
+		const subscribers = this.eventSubscribersGetter();
+		const eventMapper = this.buildEventMapper(subscribers);
+
+		const rows = await this.connection.sql<
+			{
+				id: string;
+				name: string;
+				attributes: Record<string, unknown>;
+				occurred_at: Date;
+			}[]
+		>`
+			SELECT id, name, attributes, occurred_at
+			FROM public.domain_events_to_consume
+			ORDER BY inserted_at ASC
+			LIMIT ${limit}
+			FOR UPDATE SKIP LOCKED
+		`;
+
+		if (rows.length === 0) {
+			return [];
+		}
+
+		return rows
+			.map((row) => eventMapper.fromDatabase(row))
+			.filter((event): event is DomainEvent => event !== null);
+	}
+
+	private async executeSubscribersFor(
+		event: DomainEvent,
+		tx: TransactionSql,
+	): Promise<void> {
+		const subscribers = this.eventSubscribersGetter();
+		const subscriptions = this.buildSubscriptions(subscribers);
+
+		const eventSubscribers = subscriptions.get(event.eventName);
+
+		if (eventSubscribers && eventSubscribers.length > 0) {
+			const executions = eventSubscribers.map((sub) =>
+				sub.subscriber(event),
+			);
+
+			try {
+				await Promise.all(executions);
+			} catch (error) {
+				console.error(
+					`❌ Error executing subscriber for ${event.eventName}:`,
+					error,
+				);
+				throw error;
+			}
+		}
+
+		await tx`
+			DELETE FROM public.domain_events_to_consume
+			WHERE id = ${event.eventId}
+		`;
 	}
 
 	private async publishEvents(events: DomainEvent[]): Promise<void> {
