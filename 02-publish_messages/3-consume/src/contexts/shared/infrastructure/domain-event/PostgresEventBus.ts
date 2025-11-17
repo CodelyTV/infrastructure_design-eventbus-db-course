@@ -7,7 +7,10 @@ import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
-import { DomainEventSubscriptionsMapper } from "./DomainEventSubscriptionsMapper";
+import {
+	DomainEventSubscriptionsMapper,
+	Subscriber,
+} from "./DomainEventSubscriptionsMapper";
 import { EventMapper } from "./EventMapper";
 
 export class PostgresEventBus implements EventBus {
@@ -117,25 +120,27 @@ export class PostgresEventBus implements EventBus {
 			event.eventName,
 		);
 
-		if (eventSubscribers.length > 0) {
-			const executions = eventSubscribers.map((sub) =>
-				sub.subscriber(event),
-			);
-
-			try {
-				await Promise.all(executions);
-			} catch (error) {
-				console.error(
-					`❌ Error executing subscriber for ${event.eventName}:`,
-					error,
-				);
-				throw error;
-			}
+		for (const sub of eventSubscribers) {
+			await this.executeEventSubscriber(sub, event);
 		}
 
 		await tx`
 			DELETE FROM public.domain_events_to_consume
 			WHERE id = ${event.eventId}
 		`;
+	}
+
+	private async executeEventSubscriber(
+		subscription: Subscriber,
+		event: DomainEvent,
+	): Promise<void> {
+		try {
+			await subscription.subscriber(event);
+		} catch (error) {
+			console.error(
+				`❌ Error executing subscriber ${subscription.name} for ${event.eventName}:`,
+				error,
+			);
+		}
 	}
 }
