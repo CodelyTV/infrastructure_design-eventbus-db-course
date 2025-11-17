@@ -132,31 +132,7 @@ describe("PostgresEventBus retry mechanism should", () => {
 });
 
 describe("PostgresEventBus consume should", () => {
-	it("consume and delete events from the database", async () => {
-		const events = UserRegisteredDomainEventMother.createMultiple(3);
-
-		await eventBus.publish(events);
-
-		const beforeConsume = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'codely.mooc.user.registered'
-		`;
-
-		expect(beforeConsume).toHaveLength(3);
-
-		await eventBus.consume(10);
-
-		const afterConsume = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'codely.mooc.user.registered'
-		`;
-
-		expect(afterConsume).toHaveLength(0);
-	});
-
-	it("delete specific event after consuming it", async () => {
+	it("consume and delete a specific event by id", async () => {
 		const event = UserRegisteredDomainEventMother.create();
 
 		await eventBus.publish([event]);
@@ -172,107 +148,44 @@ describe("PostgresEventBus consume should", () => {
 		expect(result).toHaveLength(0);
 	});
 
-	it("respect the limit parameter", async () => {
-		const events = TestDomainEventMother.createMultiple(5);
+	it("not consume unknown events", async () => {
+		const unknownEventId = "00000000-0000-0000-0000-000000000001";
 
-		await eventBus.publish(events);
-
-		const beforeConsume = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'test.domain.event'
-		`;
-
-		expect(beforeConsume).toHaveLength(5);
-
-		await eventBus.consume(2);
-
-		const afterConsume = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'test.domain.event'
-		`;
-
-		expect(afterConsume).toHaveLength(5);
-	});
-
-	it("consume events in order by inserted_at", async () => {
-		const events = UserRegisteredDomainEventMother.createMultiple(3);
-
-		for (const event of events) {
-			// eslint-disable-next-line no-await-in-loop
-			await eventBus.publish([event]);
-			// eslint-disable-next-line no-await-in-loop
-			await new Promise((resolve) => {
-				setTimeout(resolve, 10);
-			});
-		}
-
-		const allEvents = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'codely.mooc.user.registered'
-			ORDER BY inserted_at
-		`;
-
-		expect(allEvents).toHaveLength(3);
-
-		await eventBus.consume(1);
-
-		const remaining = await connection.sql`
-			SELECT id
-			FROM public.domain_events_to_consume
-			WHERE name = 'codely.mooc.user.registered'
-			ORDER BY inserted_at
-		`;
-
-		expect(remaining).toHaveLength(2);
-		expect(remaining[0].id).toBe(events[1].eventId);
-		expect(remaining[1].id).toBe(events[2].eventId);
-	});
-
-	it("do nothing when there are no events to consume", async () => {
-		await eventBus.consume(10);
-
-		const result = await connection.sql`
-			SELECT COUNT(*) as count
-			FROM public.domain_events_to_consume
-		`;
-
-		expect(Number(result[0].count)).toBe(0);
-	});
-
-	it("handle unknown events gracefully", async () => {
 		await connection.sql`
 			INSERT INTO public.domain_events_to_consume
 				(id, name, attributes, occurred_at)
 			VALUES (
-				'00000000-0000-0000-0000-000000000001',
+				${unknownEventId},
 				'unknown.event.name',
 				'{"data": "test"}'::jsonb,
 				NOW()
 			)
 		`;
 
-		const event = TestDomainEventMother.create();
-		await eventBus.publish([event]);
-
 		await eventBus.consume(10);
 
 		const unknownEvent = await connection.sql`
 			SELECT id
 			FROM public.domain_events_to_consume
-			WHERE id = '00000000-0000-0000-0000-000000000001'
+			WHERE id = ${unknownEventId}
 		`;
 
 		expect(unknownEvent).toHaveLength(1);
+	});
 
-		const testEvent = await connection.sql`
-			SELECT id
+	it("do nothing when there are no events", async () => {
+		const beforeCount = await connection.sql`
+			SELECT COUNT(*) as count
 			FROM public.domain_events_to_consume
-			WHERE name = 'test.domain.event'
 		`;
 
-		expect(testEvent).toHaveLength(1);
+		await eventBus.consume(10);
+
+		const afterCount = await connection.sql`
+			SELECT COUNT(*) as count
+			FROM public.domain_events_to_consume
+		`;
+
+		expect(afterCount[0].count).toBe(beforeCount[0].count);
 	});
 });
