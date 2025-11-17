@@ -1,6 +1,6 @@
 CREATE TABLE domain_events_to_consume (
 	id uuid PRIMARY KEY,
-	name TEXT,
+	name TEXT NOT NULL,
 	attributes jsonb NOT NULL,
 	occurred_at timestamptz NOT NULL,
 	inserted_at timestamptz NOT NULL DEFAULT NOW()
