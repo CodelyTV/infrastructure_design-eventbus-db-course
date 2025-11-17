@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop */
+/* eslint-disable no-await-in-loop,no-console */
 import { JSONValue, Row, TransactionSql } from "postgres";
 
 import { DomainEvent } from "../../domain/event/DomainEvent";
@@ -38,6 +38,10 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async publishEvents(events: DomainEvent[]): Promise<void> {
+		events.forEach((event) => {
+			console.log(`\n📤 Publishing event \`${event.eventName}\``);
+		});
+
 		await this.connection.sql.begin(async (tx) => {
 			await Promise.all(
 				events.map((event) => this.insertEvent(event, tx)),
@@ -113,12 +117,16 @@ export class PostgresEventBus implements EventBus {
 		event: DomainEvent,
 		tx: TransactionSql,
 	): Promise<void> {
-		const eventSubscribers = this.subscriptionsMapper().searchSubscribers(
+		const subscribers = this.subscriptionsMapper().searchSubscribers(
 			event.eventName,
 		);
 
-		for (const sub of eventSubscribers) {
-			await this.executeEventSubscriber(sub, event);
+		console.log(`\n📤 Sending event \`${event.eventName}\` to:`);
+
+		for (const subscriber of subscribers) {
+			console.log(`\t→ 💻 ${subscriber.name()}`);
+
+			await this.executeEventSubscriber(subscriber, event);
 		}
 
 		await tx`
@@ -128,14 +136,14 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async executeEventSubscriber(
-		subscription: DomainEventSubscriber<DomainEvent>,
+		subscriber: DomainEventSubscriber<DomainEvent>,
 		event: DomainEvent,
 	): Promise<void> {
 		try {
-			await subscription.on(event);
+			await subscriber.on(event);
 		} catch (error) {
 			console.error(
-				`❌ Error executing subscriber ${subscription.name()} for ${event.eventName}:`,
+				`\t\t❌ Error executing subscriber ${subscriber.name()} for ${event.eventName}:`,
 				error,
 			);
 		}
