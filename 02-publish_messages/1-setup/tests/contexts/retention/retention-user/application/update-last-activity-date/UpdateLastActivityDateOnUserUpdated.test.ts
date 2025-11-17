@@ -1,6 +1,6 @@
 import { UserRegisteredDomainEvent } from "../../../../../../src/contexts/mooc/users/domain/UserRegisteredDomainEvent";
-import { UpdateLastActivityDateOnUserUpdated } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
-import { UserLastActivityUpdater } from "../../../../../../src/contexts/retention/user/application/update-last-activity-date/UserLastActivityUpdater";
+import { UpdateLastActivityDateOnUserUpdated } from "../../../../../../src/contexts/retention/retention-user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
+import { UserLastActivityUpdater } from "../../../../../../src/contexts/retention/retention-user/application/update-last-activity-date/UserLastActivityUpdater";
 import { UserIdMother } from "../../../../mooc/users/domain/UserIdMother";
 import { UserRegisteredDomainEventMother } from "../../../../mooc/users/domain/UserRegisteredDomainEventMother";
 import { RetentionUserMother } from "../../domain/RetentionUserMother";

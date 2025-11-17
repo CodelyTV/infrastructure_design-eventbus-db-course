@@ -1,7 +1,7 @@
 import {
 	RetentionUser,
 	RetentionUserPrimitives,
-} from "../../../../../src/contexts/retention/user/domain/RetentionUser";
+} from "../../../../../src/contexts/retention/retention-user/domain/RetentionUser";
 import { DateMother } from "../../../mooc/users/domain/DateMother";
 import { UserIdMother } from "../../../mooc/users/domain/UserIdMother";
 
