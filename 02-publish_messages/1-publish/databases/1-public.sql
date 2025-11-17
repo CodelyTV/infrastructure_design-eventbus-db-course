@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS domain_events_to_consume (
+CREATE TABLE domain_events_to_consume (
 	id uuid PRIMARY KEY,
 	name TEXT,
 	attributes jsonb NOT NULL,
