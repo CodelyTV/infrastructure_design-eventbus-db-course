@@ -86,3 +86,46 @@ describe("PostgresEventBus should", () => {
 		});
 	});
 });
+
+describe("PostgresEventBus retry mechanism should", () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		jest.restoreAllMocks();
+	});
+
+	it("retry up to 3 times on failure", async () => {
+		const event = TestDomainEventMother.create();
+		const postgresConnection = container.get(PostgresConnection);
+		const databaseError = new Error("Database connection failed");
+
+		let attempts = 0;
+		jest.spyOn(postgresConnection.sql, "begin").mockImplementation(() => {
+			attempts++;
+			throw databaseError;
+		});
+
+		await expect(eventBus.publish([event])).rejects.toThrow(databaseError);
+
+		expect(attempts).toBe(3);
+	});
+
+	it("succeed on second attempt", async () => {
+		const event = TestDomainEventMother.create();
+		const postgresConnection = container.get(PostgresConnection);
+		const databaseError = new Error("Database connection failed");
+
+		let attempts = 0;
+		jest.spyOn(postgresConnection.sql, "begin").mockImplementation(() => {
+			attempts++;
+			if (attempts < 2) {
+				throw databaseError;
+			}
+
+			return Promise.resolve(undefined);
+		});
+
+		await eventBus.publish([event]);
+
+		expect(attempts).toBe(2);
+	});
+});
