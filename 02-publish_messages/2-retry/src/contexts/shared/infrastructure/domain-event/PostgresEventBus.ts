@@ -18,7 +18,7 @@ export class PostgresEventBus implements EventBus {
 		await retry(async () => await this.publishEvents(events), 3, 30);
 	}
 
-	async publishEvents(events: DomainEvent[]): Promise<void> {
+	private async publishEvents(events: DomainEvent[]): Promise<void> {
 		await this.connection.sql.begin(async (tx) => {
 			await Promise.all(
 				events.map((event) => this.insertEvent(event, tx)),
