@@ -10,8 +10,13 @@ export class DomainEventSubscriptionsMapper {
 	constructor(subscribers: DomainEventSubscriber<DomainEvent>[]) {
 		this.subscriptionMap = new Map();
 
-		for (const subscriber of subscribers) {
-			for (const event of subscriber.subscribedTo()) {
+		subscribers
+			.flatMap((subscriber) =>
+				subscriber
+					.subscribedTo()
+					.map((event) => ({ event, subscriber })),
+			)
+			.forEach(({ event, subscriber }) => {
 				const currentSubscriptions =
 					this.subscriptionMap.get(event.eventName) ?? [];
 
@@ -21,13 +26,13 @@ export class DomainEventSubscriptionsMapper {
 
 				if (!hasSubscriberAlreadyBeenAdded) {
 					currentSubscriptions.push(subscriber);
+
 					this.subscriptionMap.set(
 						event.eventName,
 						currentSubscriptions,
 					);
 				}
-			}
-		}
+			});
 	}
 
 	searchSubscribers(eventName: string): DomainEventSubscriber<DomainEvent>[] {
