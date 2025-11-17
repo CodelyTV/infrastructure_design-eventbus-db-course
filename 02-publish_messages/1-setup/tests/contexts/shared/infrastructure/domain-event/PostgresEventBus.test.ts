@@ -30,6 +30,7 @@ describe("PostgresEventBus should", () => {
 		`;
 
 		expect(result).toHaveLength(1);
+
 		expect(result[0].id).toBe(event.eventId);
 		expect(result[0].name).toBe(event.eventName);
 		expect(result[0].attributes).toEqual(event.toPrimitives());
@@ -52,6 +53,7 @@ describe("PostgresEventBus should", () => {
 			expect(result[index].id).toBe(event.eventId);
 			expect(result[index].name).toBe(event.eventName);
 			expect(result[index].attributes).toEqual(event.toPrimitives());
+			expect(result[index].occurred_at).toEqual(event.occurredOn);
 		});
 	});
 
@@ -67,10 +69,7 @@ describe("PostgresEventBus should", () => {
 	});
 
 	it("store event attributes as JSON", async () => {
-		const event = TestDomainEventMother.create({
-			testData: "test-value",
-			description: "test description",
-		});
+		const event = TestDomainEventMother.create();
 
 		await eventBus.publish([event]);
 
@@ -82,8 +81,8 @@ describe("PostgresEventBus should", () => {
 
 		expect(result[0].attributes).toEqual({
 			aggregateId: event.aggregateId,
-			testData: "test-value",
-			description: "test description",
+			testData: event.testData,
+			description: event.description,
 		});
 	});
 });
