@@ -10,7 +10,7 @@ export class MockEventBus implements EventBus {
 				events.map((event) =>
 					expect.objectContaining({
 						...event,
-						occurredOn: expect.anything(),
+						occurredAt: expect.anything(),
 						eventId: expect.anything(),
 					}),
 				),

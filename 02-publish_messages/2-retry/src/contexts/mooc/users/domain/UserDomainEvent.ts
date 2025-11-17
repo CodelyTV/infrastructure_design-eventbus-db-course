@@ -10,22 +10,22 @@ export class UserDomainEvent extends DomainEvent {
 		eventName: string,
 		public readonly id: string,
 		eventId?: string,
-		occurredOn?: Date,
+		occurredAt?: Date,
 	) {
-		super(eventName, id, eventId, occurredOn);
+		super(eventName, id, eventId, occurredAt);
 	}
 
 	static fromPrimitives(
 		aggregateId: string,
 		eventId: string,
-		occurredOn: Date,
+		occurredAt: Date,
 		_attributes: DomainEventAttributes,
 	): UserDomainEvent {
 		return new UserDomainEvent(
 			UserDomainEvent.eventName,
 			aggregateId,
 			eventId,
-			occurredOn,
+			occurredAt,
 		);
 	}
 

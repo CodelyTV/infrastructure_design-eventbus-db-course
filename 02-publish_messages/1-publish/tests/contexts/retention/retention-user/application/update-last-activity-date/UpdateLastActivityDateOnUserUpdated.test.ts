@@ -39,7 +39,7 @@ describe("UpdateLastActivityDateOnUserUpdated should", () => {
 
 				const updatedUser = RetentionUserMother.create({
 					...existingUser.toPrimitives(),
-					lastActivityDate: event.occurredOn,
+					lastActivityDate: event.occurredAt,
 				});
 
 				repository.shouldSearch(existingUser);

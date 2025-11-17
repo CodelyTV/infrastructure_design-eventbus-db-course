@@ -37,7 +37,7 @@ export class PostgresEventBus implements EventBus {
 				${event.eventId},
 				${event.eventName},
 				${tx.json(event.toPrimitives() as JSONValue)},
-				${event.occurredOn}
+				${event.occurredAt}
 			)
 		`;
 	}

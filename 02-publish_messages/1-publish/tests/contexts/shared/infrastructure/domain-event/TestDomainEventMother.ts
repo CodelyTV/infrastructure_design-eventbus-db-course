@@ -8,14 +8,14 @@ export class TestDomainEventMother {
 		testData?: string;
 		description?: string;
 		eventId?: string;
-		occurredOn?: Date;
+		occurredAt?: Date;
 	}): TestDomainEvent {
 		return new TestDomainEvent(
 			params?.aggregateId ?? faker.string.uuid(),
 			params?.testData ?? faker.lorem.word(),
 			params?.description ?? faker.lorem.sentence(),
 			params?.eventId,
-			params?.occurredOn,
+			params?.occurredAt,
 		);
 	}
 

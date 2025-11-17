@@ -14,15 +14,15 @@ export class WelcomeEmailSentDomainEvent extends DomainEvent {
 		public readonly toEmailAddress: string,
 		public readonly emailBody: string,
 		eventId?: string,
-		occurredOn?: Date,
+		occurredAt?: Date,
 	) {
-		super(WelcomeEmailSentDomainEvent.eventName, id, eventId, occurredOn);
+		super(WelcomeEmailSentDomainEvent.eventName, id, eventId, occurredAt);
 	}
 
 	static fromPrimitives(
 		aggregateId: string,
 		eventId: string,
-		occurredOn: Date,
+		occurredAt: Date,
 		attributes: DomainEventAttributes,
 	): WelcomeEmailSentDomainEvent {
 		return new WelcomeEmailSentDomainEvent(
@@ -33,7 +33,7 @@ export class WelcomeEmailSentDomainEvent extends DomainEvent {
 			attributes.toEmailAddress as string,
 			attributes.emailBody as string,
 			eventId,
-			occurredOn,
+			occurredAt,
 		);
 	}
 

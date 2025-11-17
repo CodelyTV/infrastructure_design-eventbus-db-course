@@ -3,26 +3,25 @@ import { v4 } from "uuid";
 export type DomainEventAttributes = { [key: string]: unknown };
 
 export abstract class DomainEvent {
+	static fromPrimitives: (
+		aggregateId: string,
+		eventId: string,
+		occurredAt: Date,
+		attributes: DomainEventAttributes,
+	) => DomainEvent;
+
 	public readonly eventId: string;
-	public readonly occurredOn: Date;
+	public readonly occurredAt: Date;
 
 	protected constructor(
 		public readonly eventName: string,
 		public readonly aggregateId: string,
 		eventId?: string,
-		occurredOn?: Date,
+		occurredAt?: Date,
 	) {
 		this.eventId = eventId ?? v4();
-		this.occurredOn = occurredOn ?? new Date();
+		this.occurredAt = occurredAt ?? new Date();
 	}
-
-	// eslint-disable-next-line @typescript-eslint/member-ordering
-	static fromPrimitives: (
-		aggregateId: string,
-		eventId: string,
-		occurredOn: Date,
-		attributes: DomainEventAttributes,
-	) => DomainEvent;
 
 	abstract toPrimitives(): DomainEventAttributes;
 }

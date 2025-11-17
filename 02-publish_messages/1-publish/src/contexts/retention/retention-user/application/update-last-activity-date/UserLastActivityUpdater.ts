@@ -7,7 +7,7 @@ import { RetentionUserRepository } from "../../domain/RetentionUserRepository";
 export class UserLastActivityUpdater {
 	constructor(private readonly repository: RetentionUserRepository) {}
 
-	async update(id: string, occurredOn: Date): Promise<void> {
+	async update(id: string, occurredAt: Date): Promise<void> {
 		const user = await this.repository.search(new UserId(id));
 
 		if (user === null) {
@@ -16,8 +16,8 @@ export class UserLastActivityUpdater {
 			);
 		}
 
-		if (user.lastActivityDateIsOlderThan(occurredOn)) {
-			user.updateLastActivityDate(occurredOn);
+		if (user.lastActivityDateIsOlderThan(occurredAt)) {
+			user.updateLastActivityDate(occurredAt);
 
 			await this.repository.save(user);
 		}
