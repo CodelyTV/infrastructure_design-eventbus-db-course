@@ -5,19 +5,20 @@ import { PostgresEventBus } from "../../../../../src/contexts/shared/infrastruct
 import { PostgresConnection } from "../../../../../src/contexts/shared/infrastructure/postgres/PostgresConnection";
 
 import { TestDomainEventMother } from "./TestDomainEventMother";
+import { UserRegisteredDomainEventMother } from "./UserRegisteredDomainEventMother";
 
 const connection = container.get(PostgresConnection);
 const eventBus = container.get(PostgresEventBus);
 
+beforeEach(async () => {
+	await connection.truncateAll();
+});
+
+afterAll(async () => {
+	await connection.end();
+});
+
 describe("PostgresEventBus should", () => {
-	beforeEach(async () => {
-		await connection.truncateAll();
-	});
-
-	afterAll(async () => {
-		await connection.end();
-	});
-
 	it("publish a single event", async () => {
 		const event = TestDomainEventMother.create();
 
@@ -127,5 +128,151 @@ describe("PostgresEventBus retry mechanism should", () => {
 		await eventBus.publish([event]);
 
 		expect(attempts).toBe(2);
+	});
+});
+
+describe("PostgresEventBus consume should", () => {
+	it("consume and delete events from the database", async () => {
+		const events = UserRegisteredDomainEventMother.createMultiple(3);
+
+		await eventBus.publish(events);
+
+		const beforeConsume = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'codely.mooc.user.registered'
+		`;
+
+		expect(beforeConsume).toHaveLength(3);
+
+		await eventBus.consume(10);
+
+		const afterConsume = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'codely.mooc.user.registered'
+		`;
+
+		expect(afterConsume).toHaveLength(0);
+	});
+
+	it("delete specific event after consuming it", async () => {
+		const event = UserRegisteredDomainEventMother.create();
+
+		await eventBus.publish([event]);
+
+		await eventBus.consume(1);
+
+		const result = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE id = ${event.eventId}
+		`;
+
+		expect(result).toHaveLength(0);
+	});
+
+	it("respect the limit parameter", async () => {
+		const events = TestDomainEventMother.createMultiple(5);
+
+		await eventBus.publish(events);
+
+		const beforeConsume = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'test.domain.event'
+		`;
+
+		expect(beforeConsume).toHaveLength(5);
+
+		await eventBus.consume(2);
+
+		const afterConsume = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'test.domain.event'
+		`;
+
+		expect(afterConsume).toHaveLength(5);
+	});
+
+	it("consume events in order by inserted_at", async () => {
+		const events = UserRegisteredDomainEventMother.createMultiple(3);
+
+		for (const event of events) {
+			// eslint-disable-next-line no-await-in-loop
+			await eventBus.publish([event]);
+			// eslint-disable-next-line no-await-in-loop
+			await new Promise((resolve) => {
+				setTimeout(resolve, 10);
+			});
+		}
+
+		const allEvents = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'codely.mooc.user.registered'
+			ORDER BY inserted_at
+		`;
+
+		expect(allEvents).toHaveLength(3);
+
+		await eventBus.consume(1);
+
+		const remaining = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'codely.mooc.user.registered'
+			ORDER BY inserted_at
+		`;
+
+		expect(remaining).toHaveLength(2);
+		expect(remaining[0].id).toBe(events[1].eventId);
+		expect(remaining[1].id).toBe(events[2].eventId);
+	});
+
+	it("do nothing when there are no events to consume", async () => {
+		await eventBus.consume(10);
+
+		const result = await connection.sql`
+			SELECT COUNT(*) as count
+			FROM public.domain_events_to_consume
+		`;
+
+		expect(Number(result[0].count)).toBe(0);
+	});
+
+	it("handle unknown events gracefully", async () => {
+		await connection.sql`
+			INSERT INTO public.domain_events_to_consume
+				(id, name, attributes, occurred_at)
+			VALUES (
+				'00000000-0000-0000-0000-000000000001',
+				'unknown.event.name',
+				'{"data": "test"}'::jsonb,
+				NOW()
+			)
+		`;
+
+		const event = TestDomainEventMother.create();
+		await eventBus.publish([event]);
+
+		await eventBus.consume(10);
+
+		const unknownEvent = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE id = '00000000-0000-0000-0000-000000000001'
+		`;
+
+		expect(unknownEvent).toHaveLength(1);
+
+		const testEvent = await connection.sql`
+			SELECT id
+			FROM public.domain_events_to_consume
+			WHERE name = 'test.domain.event'
+		`;
+
+		expect(testEvent).toHaveLength(1);
 	});
 });
