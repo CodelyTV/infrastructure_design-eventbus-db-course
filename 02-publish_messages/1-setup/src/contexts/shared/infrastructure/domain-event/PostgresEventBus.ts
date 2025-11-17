@@ -1,5 +1,5 @@
 import { Service } from "diod";
-import postgres, { Row } from "postgres";
+import postgres, { JSONValue, Row } from "postgres";
 
 import { DomainEvent } from "../../domain/event/DomainEvent";
 import { EventBus } from "../../domain/event/EventBus";
@@ -31,7 +31,7 @@ export class PostgresEventBus implements EventBus {
 			VALUES (
 				${event.eventId},
 				${event.eventName},
-				${tx.json(event.toPrimitives())},
+				${tx.json(event.toPrimitives() as JSONValue)},
 				${event.occurredOn}
 			)
 		`;
