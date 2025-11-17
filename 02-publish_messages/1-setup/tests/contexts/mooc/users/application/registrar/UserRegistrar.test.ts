@@ -1,4 +1,5 @@
 import { UserRegistrar } from "../../../../../../src/contexts/mooc/users/application/registrar/UserRegistrar";
+import { UserAlreadyExistError } from "../../../../../../src/contexts/mooc/users/domain/UserAlreadyExistError";
 import { MockEventBus } from "../../../../shared/infrastructure/MockEventBus";
 import { UserMother } from "../../domain/UserMother";
 import { UserRegisteredDomainEventMother } from "../../domain/UserRegisteredDomainEventMother";
@@ -17,6 +18,7 @@ describe("UserRegistrar should", () => {
 			expectedUserPrimitives,
 		);
 
+		repository.shouldSearchAndReturnNull(expectedUser.id);
 		repository.shouldSave(expectedUser);
 		eventBus.shouldPublish([expectedDomainEvent]);
 
@@ -26,5 +28,21 @@ describe("UserRegistrar should", () => {
 			expectedUserPrimitives.bio,
 			expectedUserPrimitives.email,
 		);
+	});
+
+	it("throw error when user already exists", async () => {
+		const existingUser = UserMother.create();
+		const existingUserPrimitives = existingUser.toPrimitives();
+
+		repository.shouldSearch(existingUser);
+
+		await expect(
+			userRegistrar.registrar(
+				existingUserPrimitives.id,
+				existingUserPrimitives.name,
+				existingUserPrimitives.bio,
+				existingUserPrimitives.email,
+			),
+		).rejects.toThrow(UserAlreadyExistError);
 	});
 });

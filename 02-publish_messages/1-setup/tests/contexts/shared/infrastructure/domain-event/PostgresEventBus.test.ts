@@ -81,6 +81,7 @@ describe("PostgresEventBus should", () => {
 		`;
 
 		expect(result[0].attributes).toEqual({
+			aggregateId: event.aggregateId,
 			testData: "test-value",
 			description: "test description",
 		});
