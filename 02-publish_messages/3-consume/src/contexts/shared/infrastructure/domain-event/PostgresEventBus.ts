@@ -1,19 +1,19 @@
 /* eslint-disable no-console */
-import { Service } from "diod";
 import { JSONValue, Row, TransactionSql } from "postgres";
 
 import { DomainEvent } from "../../domain/event/DomainEvent";
 import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
-import { container } from "../dependency-injection/diod.config";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
 import { EventMapper } from "./EventMapper";
 
-@Service()
 export class PostgresEventBus implements EventBus {
-	constructor(private readonly connection: PostgresConnection) {}
+	constructor(
+		private readonly connection: PostgresConnection,
+		private readonly eventSubscribersGetter: () => DomainEventSubscriber<DomainEvent>[],
+	) {}
 
 	async publish(events: DomainEvent[]): Promise<void> {
 		if (events.length === 0) {
@@ -24,12 +24,7 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	async consume(limit: number): Promise<void> {
-		const subscribers = container
-			.findTaggedServiceIdentifiers<
-				DomainEventSubscriber<DomainEvent>
-			>("subscriber")
-			.map((id) => container.get(id));
-
+		const subscribers = this.eventSubscribersGetter();
 		const subscriptions = this.buildSubscriptions(subscribers);
 		const eventMapper = this.buildEventMapper(subscribers);
 
@@ -122,7 +117,7 @@ export class PostgresEventBus implements EventBus {
 				${event.eventId},
 				${event.eventName},
 				${tx.json(event.toPrimitives() as JSONValue)},
-				${event.occurredOn}
+				${event.occurredAt}
 			)
 		`;
 	}

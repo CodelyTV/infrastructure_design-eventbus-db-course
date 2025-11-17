@@ -35,6 +35,8 @@ import { ShopUserRegistrar } from "../../../shop/shop-user/application/register-
 import { ShopUserSearcher } from "../../../shop/shop-user/application/search/ShopUserSearcher";
 import { ShopUserRepository } from "../../../shop/shop-user/domain/ShopUserRepository";
 import { PostgresShopUserRepository } from "../../../shop/shop-user/infrastructure/PostgresShopUserRepository";
+import { DomainEvent } from "../../domain/event/DomainEvent";
+import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 import { EventBus } from "../../domain/event/EventBus";
 import { UuidGenerator } from "../../domain/UuidGenerator";
 import { PostgresEventBus } from "../domain-event/PostgresEventBus";
@@ -57,8 +59,6 @@ builder
 	})
 	.asSingleton();
 
-builder.register(EventBus).use(PostgresEventBus);
-builder.registerAndUse(PostgresEventBus);
 builder.register(UuidGenerator).use(NativeUuidGenerator);
 builder.register(EmailSender).use(FakeEmailSender);
 
@@ -109,5 +109,32 @@ builder
 builder.registerAndUse(WelcomeEmailSender);
 builder.registerAndUse(SendWelcomeEmailOnUserRegistered).addTag("subscriber");
 
-// Export container
+builder
+	.register(PostgresEventBus)
+	.useFactory((container) => {
+		const eventSubscribersGetter =
+			(): DomainEventSubscriber<DomainEvent>[] =>
+				container
+					.findTaggedServiceIdentifiers<
+						DomainEventSubscriber<DomainEvent>
+					>("subscriber")
+					.map(
+						(id) =>
+							container.get(
+								id,
+							) as DomainEventSubscriber<DomainEvent>,
+					);
+
+		return new PostgresEventBus(
+			container.get(PostgresConnection),
+			eventSubscribersGetter,
+		);
+	})
+	.asSingleton();
+
+builder
+	.register(EventBus)
+	.useFactory((deps) => deps.get(PostgresEventBus))
+	.asSingleton();
+
 export const container = builder.build();

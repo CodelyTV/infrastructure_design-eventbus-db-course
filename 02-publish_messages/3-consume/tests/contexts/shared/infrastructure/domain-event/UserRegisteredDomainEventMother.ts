@@ -9,7 +9,7 @@ export class UserRegisteredDomainEventMother {
 		bio?: string;
 		email?: string;
 		eventId?: string;
-		occurredOn?: Date;
+		occurredAt?: Date;
 	}): UserRegisteredDomainEvent {
 		return new UserRegisteredDomainEvent(
 			params?.id ?? faker.string.uuid(),
@@ -17,7 +17,7 @@ export class UserRegisteredDomainEventMother {
 			params?.bio ?? faker.lorem.sentence(),
 			params?.email ?? faker.internet.email(),
 			params?.eventId,
-			params?.occurredOn,
+			params?.occurredAt,
 		);
 	}
 

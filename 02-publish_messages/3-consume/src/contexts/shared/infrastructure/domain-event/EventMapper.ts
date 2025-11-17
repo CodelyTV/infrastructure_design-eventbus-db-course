@@ -16,7 +16,7 @@ type DomainEventClassWithFactory<T extends DomainEvent = DomainEvent> =
 		fromPrimitives(
 			aggregateId: string,
 			eventId: string,
-			occurredOn: Date,
+			occurredAt: Date,
 			attributes: DomainEventAttributes,
 		): T;
 	};

@@ -35,7 +35,7 @@ describe("PostgresEventBus should", () => {
 		expect(result[0].id).toBe(event.eventId);
 		expect(result[0].name).toBe(event.eventName);
 		expect(result[0].attributes).toEqual(event.toPrimitives());
-		expect(result[0].occurred_at).toEqual(event.occurredOn);
+		expect(result[0].occurred_at).toEqual(event.occurredAt);
 	});
 
 	it("publish multiple events in a transaction", async () => {
@@ -54,7 +54,7 @@ describe("PostgresEventBus should", () => {
 			expect(result[index].id).toBe(event.eventId);
 			expect(result[index].name).toBe(event.eventName);
 			expect(result[index].attributes).toEqual(event.toPrimitives());
-			expect(result[index].occurred_at).toEqual(event.occurredOn);
+			expect(result[index].occurred_at).toEqual(event.occurredAt);
 		});
 	});
 

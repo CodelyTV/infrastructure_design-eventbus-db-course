@@ -11,15 +11,15 @@ export class UserRegisteredDomainEvent extends UserDomainEvent {
 		public readonly bio: string,
 		public readonly email: string,
 		eventId?: string,
-		occurredOn?: Date,
+		occurredAt?: Date,
 	) {
-		super(UserRegisteredDomainEvent.eventName, id, eventId, occurredOn);
+		super(UserRegisteredDomainEvent.eventName, id, eventId, occurredAt);
 	}
 
 	static fromPrimitives(
 		aggregateId: string,
 		eventId: string,
-		occurredOn: Date,
+		occurredAt: Date,
 		attributes: DomainEventAttributes,
 	): UserRegisteredDomainEvent {
 		return new UserRegisteredDomainEvent(
@@ -28,7 +28,7 @@ export class UserRegisteredDomainEvent extends UserDomainEvent {
 			attributes.bio as string,
 			attributes.email as string,
 			eventId,
-			occurredOn,
+			occurredAt,
 		);
 	}
 

@@ -13,7 +13,7 @@ export class UpdateLastActivityDateOnUserUpdated
 	constructor(private readonly updater: UserLastActivityUpdater) {}
 
 	async on(event: UserDomainEvent): Promise<void> {
-		await this.updater.update(event.id, event.occurredOn);
+		await this.updater.update(event.id, event.occurredAt);
 	}
 
 	subscribedTo(): DomainEventClass[] {

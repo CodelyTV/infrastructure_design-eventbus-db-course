@@ -11,15 +11,15 @@ export class TestDomainEvent extends DomainEvent {
 		public readonly testData: string,
 		public readonly description: string,
 		eventId?: string,
-		occurredOn?: Date,
+		occurredAt?: Date,
 	) {
-		super(TestDomainEvent.eventName, aggregateId, eventId, occurredOn);
+		super(TestDomainEvent.eventName, aggregateId, eventId, occurredAt);
 	}
 
 	static fromPrimitives(
 		aggregateId: string,
 		eventId: string,
-		occurredOn: Date,
+		occurredAt: Date,
 		attributes: DomainEventAttributes,
 	): TestDomainEvent {
 		return new TestDomainEvent(
@@ -27,7 +27,7 @@ export class TestDomainEvent extends DomainEvent {
 			attributes.testData as string,
 			attributes.description as string,
 			eventId,
-			occurredOn,
+			occurredAt,
 		);
 	}
 
