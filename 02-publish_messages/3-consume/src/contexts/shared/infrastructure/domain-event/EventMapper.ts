@@ -3,13 +3,7 @@ import {
 	DomainEventAttributes,
 } from "../../domain/event/DomainEvent";
 import { DomainEventClass } from "../../domain/event/DomainEventClass";
-
-interface EventRow {
-	id: string;
-	name: string;
-	attributes: Record<string, unknown>;
-	occurred_at: Date;
-}
+import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 
 type DomainEventClassWithFactory<T extends DomainEvent = DomainEvent> =
 	DomainEventClass<T> & {
@@ -35,20 +29,44 @@ export class EventMapper {
 		}
 	}
 
-	fromDatabase(row: EventRow): DomainEvent | null {
-		const EventClass = this.eventMap.get(row.name);
+	static fromSubscribers(
+		subscribers: DomainEventSubscriber<DomainEvent>[],
+	): EventMapper {
+		const eventClasses = subscribers.flatMap((subscriber) =>
+			subscriber.subscribedTo(),
+		);
+
+		const uniqueEventClasses = Array.from(
+			new Map(
+				eventClasses.map((eventClass) => [
+					eventClass.eventName,
+					eventClass,
+				]),
+			).values(),
+		);
+
+		return new EventMapper(uniqueEventClasses);
+	}
+
+	searchEvent(
+		id: string,
+		name: string,
+		attributes: Record<string, unknown>,
+		occurredAt: Date,
+	): DomainEvent | null {
+		const EventClass = this.eventMap.get(name);
 
 		if (!EventClass) {
 			return null;
 		}
 
-		const aggregateId = row.attributes.id as string;
+		const aggregateId = attributes.id as string;
 
 		return EventClass.fromPrimitives(
 			aggregateId,
-			row.id,
-			row.occurred_at,
-			row.attributes,
+			id,
+			occurredAt,
+			attributes,
 		);
 	}
 }

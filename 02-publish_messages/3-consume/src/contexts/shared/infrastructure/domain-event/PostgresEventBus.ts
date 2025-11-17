@@ -10,6 +10,8 @@ import { PostgresConnection } from "../postgres/PostgresConnection";
 import { EventMapper } from "./EventMapper";
 
 export class PostgresEventBus implements EventBus {
+	private eventMapperCache?: EventMapper;
+
 	constructor(
 		private readonly connection: PostgresConnection,
 		private readonly eventSubscribersGetter: () => DomainEventSubscriber<DomainEvent>[],
@@ -39,8 +41,7 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async searchEventsToConsume(limit: number): Promise<DomainEvent[]> {
-		const subscribers = this.eventSubscribersGetter();
-		const eventMapper = this.buildEventMapper(subscribers);
+		const eventMapper = this.eventMapper();
 
 		const rows = await this.connection.sql<
 			{
@@ -62,8 +63,23 @@ export class PostgresEventBus implements EventBus {
 		}
 
 		return rows
-			.map((row) => eventMapper.fromDatabase(row))
+			.map((row) =>
+				eventMapper.searchEvent(
+					row.id,
+					row.name,
+					row.attributes,
+					row.occurred_at,
+				),
+			)
 			.filter((event): event is DomainEvent => event !== null);
+	}
+
+	private eventMapper(): EventMapper {
+		this.eventMapperCache ??= EventMapper.fromSubscribers(
+			this.eventSubscribersGetter(),
+		);
+
+		return this.eventMapperCache;
 	}
 
 	private async executeSubscribersFor(
@@ -157,24 +173,5 @@ export class PostgresEventBus implements EventBus {
 		}
 
 		return subscriptions;
-	}
-
-	private buildEventMapper(
-		subscribers: DomainEventSubscriber<DomainEvent>[],
-	): EventMapper {
-		const eventClasses = subscribers.flatMap((subscriber) =>
-			subscriber.subscribedTo(),
-		);
-
-		const uniqueEventClasses = Array.from(
-			new Map(
-				eventClasses.map((eventClass) => [
-					eventClass.eventName,
-					eventClass,
-				]),
-			).values(),
-		);
-
-		return new EventMapper(uniqueEventClasses);
 	}
 }
