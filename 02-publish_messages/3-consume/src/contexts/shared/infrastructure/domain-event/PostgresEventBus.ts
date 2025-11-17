@@ -40,6 +40,30 @@ export class PostgresEventBus implements EventBus {
 		});
 	}
 
+	private async publishEvents(events: DomainEvent[]): Promise<void> {
+		await this.connection.sql.begin(async (tx) => {
+			await Promise.all(
+				events.map((event) => this.insertEvent(event, tx)),
+			);
+		});
+	}
+
+	private async insertEvent(
+		event: DomainEvent,
+		tx: TransactionSql,
+	): Promise<Row[]> {
+		return tx`
+			INSERT INTO public.domain_events_to_consume
+				(id, name, attributes, occurred_at)
+			VALUES (
+				${event.eventId},
+				${event.eventName},
+				${tx.json(event.toPrimitives() as JSONValue)},
+				${event.occurredAt}
+			)
+		`;
+	}
+
 	private async searchEventsToConsume(limit: number): Promise<DomainEvent[]> {
 		const rows = await this.connection.sql<
 			{
@@ -108,30 +132,6 @@ export class PostgresEventBus implements EventBus {
 		await tx`
 			DELETE FROM public.domain_events_to_consume
 			WHERE id = ${event.eventId}
-		`;
-	}
-
-	private async publishEvents(events: DomainEvent[]): Promise<void> {
-		await this.connection.sql.begin(async (tx) => {
-			await Promise.all(
-				events.map((event) => this.insertEvent(event, tx)),
-			);
-		});
-	}
-
-	private async insertEvent(
-		event: DomainEvent,
-		tx: TransactionSql,
-	): Promise<Row[]> {
-		return tx`
-			INSERT INTO public.domain_events_to_consume
-				(id, name, attributes, occurred_at)
-			VALUES (
-				${event.eventId},
-				${event.eventName},
-				${tx.json(event.toPrimitives() as JSONValue)},
-				${event.occurredAt}
-			)
 		`;
 	}
 
