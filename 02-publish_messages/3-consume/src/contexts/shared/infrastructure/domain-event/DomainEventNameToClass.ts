@@ -4,25 +4,25 @@ import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber"
 
 type EventName = string;
 
-export class EventMapper {
-	private readonly eventMap: Map<EventName, DomainEventClass>;
+export class DomainEventNameToClass {
+	private readonly eventNameToClass: Map<EventName, DomainEventClass>;
 
 	constructor(eventClasses: DomainEventClass[]) {
-		this.eventMap = new Map();
+		this.eventNameToClass = new Map();
 
-		for (const eventClass of eventClasses) {
-			this.eventMap.set(eventClass.eventName, eventClass);
-		}
+		eventClasses.forEach((eventClass) => {
+			this.eventNameToClass.set(eventClass.eventName, eventClass);
+		});
 	}
 
 	static fromSubscribers(
 		subscribers: DomainEventSubscriber<DomainEvent>[],
-	): EventMapper {
+	): DomainEventNameToClass {
 		const eventClasses = subscribers.flatMap((subscriber) =>
 			subscriber.subscribedTo(),
 		);
 
-		return new EventMapper(eventClasses);
+		return new DomainEventNameToClass(eventClasses);
 	}
 
 	searchEvent(
@@ -31,7 +31,7 @@ export class EventMapper {
 		attributes: Record<string, unknown>,
 		occurredAt: Date,
 	): DomainEvent | null {
-		const EventClass = this.eventMap.get(name);
+		const EventClass = this.eventNameToClass.get(name);
 
 		if (!EventClass) {
 			return null;

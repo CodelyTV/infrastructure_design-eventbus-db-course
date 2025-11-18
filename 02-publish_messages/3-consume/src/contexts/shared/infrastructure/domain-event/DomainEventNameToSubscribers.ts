@@ -3,14 +3,14 @@ import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber"
 
 type EventName = string;
 
-export class DomainEventSubscriptionsMapper {
-	private readonly subscriptionMap: Map<
+export class DomainEventNameToSubscribers {
+	private readonly eventNameToSubscribers: Map<
 		EventName,
 		DomainEventSubscriber<DomainEvent>[]
 	>;
 
 	constructor(subscribers: DomainEventSubscriber<DomainEvent>[]) {
-		this.subscriptionMap = new Map();
+		this.eventNameToSubscribers = new Map();
 
 		subscribers
 			.flatMap((subscriber) =>
@@ -20,7 +20,7 @@ export class DomainEventSubscriptionsMapper {
 			)
 			.forEach(({ event, subscriber }) => {
 				const currentSubscriptions =
-					this.subscriptionMap.get(event.eventName) ?? [];
+					this.eventNameToSubscribers.get(event.eventName) ?? [];
 
 				const hasSubscriberAlreadyBeenAdded = currentSubscriptions.some(
 					(sub) => sub.name() === subscriber.name(),
@@ -29,7 +29,7 @@ export class DomainEventSubscriptionsMapper {
 				if (!hasSubscriberAlreadyBeenAdded) {
 					currentSubscriptions.push(subscriber);
 
-					this.subscriptionMap.set(
+					this.eventNameToSubscribers.set(
 						event.eventName,
 						currentSubscriptions,
 					);
@@ -38,6 +38,6 @@ export class DomainEventSubscriptionsMapper {
 	}
 
 	searchSubscribers(eventName: string): DomainEventSubscriber<DomainEvent>[] {
-		return this.subscriptionMap.get(eventName) ?? [];
+		return this.eventNameToSubscribers.get(eventName) ?? [];
 	}
 }

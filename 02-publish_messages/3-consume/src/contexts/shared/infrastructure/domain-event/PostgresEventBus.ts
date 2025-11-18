@@ -7,12 +7,12 @@ import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
-import { DomainEventSubscriptionsMapper } from "./DomainEventSubscriptionsMapper";
-import { EventMapper } from "./EventMapper";
+import { DomainEventNameToClass } from "./DomainEventNameToClass";
+import { DomainEventNameToSubscribers } from "./DomainEventNameToSubscribers";
 
 export class PostgresEventBus implements EventBus {
-	private eventMapperCache?: EventMapper;
-	private subscriptionMapperCache?: DomainEventSubscriptionsMapper;
+	private eventNameToClassCache?: DomainEventNameToClass;
+	private eventNameToSubscribersCache?: DomainEventNameToSubscribers;
 
 	constructor(
 		private readonly connection: PostgresConnection,
@@ -87,7 +87,7 @@ export class PostgresEventBus implements EventBus {
 
 		return rows
 			.map((row) =>
-				this.eventMapper().searchEvent(
+				this.eventNameToClass().searchEvent(
 					row.id,
 					row.name,
 					row.attributes,
@@ -97,27 +97,27 @@ export class PostgresEventBus implements EventBus {
 			.filter((event): event is DomainEvent => event !== null);
 	}
 
-	private eventMapper(): EventMapper {
-		this.eventMapperCache ??= EventMapper.fromSubscribers(
+	private eventNameToClass(): DomainEventNameToClass {
+		this.eventNameToClassCache ??= DomainEventNameToClass.fromSubscribers(
 			this.eventSubscribersGetter(),
 		);
 
-		return this.eventMapperCache;
+		return this.eventNameToClassCache;
 	}
 
-	private subscriptionsMapper(): DomainEventSubscriptionsMapper {
-		this.subscriptionMapperCache ??= new DomainEventSubscriptionsMapper(
+	private eventNameToSubscribers(): DomainEventNameToSubscribers {
+		this.eventNameToSubscribersCache ??= new DomainEventNameToSubscribers(
 			this.eventSubscribersGetter(),
 		);
 
-		return this.subscriptionMapperCache;
+		return this.eventNameToSubscribersCache;
 	}
 
 	private async executeEventSubscribers(
 		event: DomainEvent,
 		tx: TransactionSql,
 	): Promise<void> {
-		const subscribers = this.subscriptionsMapper().searchSubscribers(
+		const subscribers = this.eventNameToSubscribers().searchSubscribers(
 			event.eventName,
 		);
 
