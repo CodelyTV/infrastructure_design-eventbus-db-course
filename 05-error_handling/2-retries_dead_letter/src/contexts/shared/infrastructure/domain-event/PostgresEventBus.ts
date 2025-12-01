@@ -195,7 +195,9 @@ export class PostgresEventBus implements EventBus {
 			);
 
 			if (row.retries >= PostgresEventBus.MAX_RETRIES - 1) {
-				console.error(`\t💀 Moving event to dead letter after ${PostgresEventBus.MAX_RETRIES} failed attempts`);
+				console.error(
+					`\t💀 Moving event to dead letter after ${PostgresEventBus.MAX_RETRIES} failed attempts`,
+				);
 
 				await tx`
 					UPDATE public.domain_events_to_consume
