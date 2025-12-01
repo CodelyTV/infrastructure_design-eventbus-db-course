@@ -18,8 +18,14 @@ export class DomainEventSubscriberNameToClass {
 		});
 	}
 
-	find(subscriberName: string): DomainEventSubscriber<DomainEvent> {
+	search(subscriberName: string): DomainEventSubscriber<DomainEvent> | null {
 		const subscriber = this.subscriberNameToClass.get(subscriberName);
+
+		return subscriber ?? null;
+	}
+
+	find(subscriberName: string): DomainEventSubscriber<DomainEvent> {
+		const subscriber = this.search(subscriberName);
 
 		if (!subscriber) {
 			throw new DomainEventSubscriberNotExistError(subscriberName);

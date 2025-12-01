@@ -162,9 +162,15 @@ export class PostgresEventBus implements EventBus {
 			return;
 		}
 
-		const subscriber = this.subscriberNameToClass().find(
+		const subscriber = this.subscriberNameToClass().search(
 			row.subscriberName,
 		);
+
+		if (!subscriber) {
+			console.error(`\t❌ Unknown subscriber: ${row.subscriberName}`);
+
+			return;
+		}
 
 		console.log(
 			`\n📥 Consuming event \`${event.eventName}\` for subscriber \`${subscriber.name()}\``,
