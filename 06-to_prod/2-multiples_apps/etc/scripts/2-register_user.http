@@ -1,0 +1,29 @@
+### Register Javi
+PUT http://localhost:3000/api/mooc/users/3387fafa-c603-4d77-97e4-cbd1422efd7f
+Content-Type: application/json
+
+{
+  "name": "Javier Ferrer",
+  "bio": "Software developer passionate about clean code",
+  "email": "javi@mail.com"
+}
+
+### Register Rafa
+PUT http://localhost:3000/api/mooc/users/d88536d0-c113-43a0-bc01-0bcc9e70bdbf
+Content-Type: application/json
+
+{
+	"name": "Rafa Gómez",
+	"bio": "Software developer passionate about clean code too",
+	"email": "rafa@mail.com"
+}
+
+### Register random user
+PUT http://localhost:3000/api/mooc/users/{{$uuid}}
+Content-Type: application/json
+
+{
+	"name": "{{$random.name.name}}",
+	"bio": "{{$random.hacker.verb}}",
+	"email": "{{$random.email}}"
+}
