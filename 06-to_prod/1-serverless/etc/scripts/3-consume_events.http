@@ -1,0 +1,8 @@
+###
+GET http://localhost:3000/api/event-bus/consume?subscribers=*&limit=50
+
+###
+GET http://localhost:3000/api/event-bus/consume?subscribers=codely.retention.send_welcome_email_on_user_registered&limit=50
+
+###
+GET http://localhost:3000/api/event-bus/consume?subscribers=codely.shop.register_shop_user_on_user_registered&limit=50
