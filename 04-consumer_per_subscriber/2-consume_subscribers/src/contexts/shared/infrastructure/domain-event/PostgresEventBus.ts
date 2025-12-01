@@ -104,7 +104,7 @@ export class PostgresEventBus implements EventBus {
 	): Promise<DomainEventToConsume[]> {
 		const where =
 			subscribers === "*"
-				? ""
+				? tx``
 				: tx`WHERE subscriber_name = ANY(${subscribers})`;
 
 		return tx`
