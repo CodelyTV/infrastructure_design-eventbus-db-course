@@ -12,7 +12,9 @@
 		"test:ci": "jest --testMatch '**/*.ci.test.ts'",
 		"create-courses": "ts-node ./src/app/scripts/create-courses.ts",
 		"search-courses": "ts-node ./src/app/scripts/search-courses.ts",
-		"consume-events": "ts-node ./src/app/scripts/consume-postgres-events.ts"
+		"consume-events": "ts-node ./src/app/scripts/consume-postgres-events.ts",
+		"stress-test": "ts-node ./src/app/scripts/stress-test-users.ts",
+		"monitor-events": "ts-node ./src/app/scripts/monitor-events.ts"
 	},
 	"dependencies": {
 		"diod": "^3.0.0",
