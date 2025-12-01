@@ -17,10 +17,6 @@ import { SendWelcomeEmailOnUserRegistered } from "../../../retention/email/appli
 import { WelcomeEmailSender } from "../../../retention/email/application/send-welcome-email/WelcomeEmailSender";
 import { EmailSender } from "../../../retention/email/domain/EmailSender";
 import { FakeEmailSender } from "../../../retention/email/infrastructure/FakeEmailSender";
-import { UpdateLastActivityDateOnUserUpdated } from "../../../retention/retention-user/application/update-last-activity-date/UpdateLastActivityDateOnUserUpdated";
-import { UserLastActivityUpdater } from "../../../retention/retention-user/application/update-last-activity-date/UserLastActivityUpdater";
-import { RetentionUserRepository } from "../../../retention/retention-user/domain/RetentionUserRepository";
-import { FakeRetentionUserRepository } from "../../../retention/retention-user/infrastructure/FakeRetentionUserRepository";
 import { ProductReviewCreator } from "../../../shop/product-reviews/application/create/ProductReviewCreator";
 import { ProductReviewsByProductSearcher } from "../../../shop/product-reviews/application/search-by-product-id/ProductReviewsByProductSearcher";
 import { ProductReviewRepository } from "../../../shop/product-reviews/domain/ProductReviewRepository";
@@ -96,14 +92,6 @@ builder.register(ProductReviewRepository).use(PostgresProductReviewRepository);
 builder.registerAndUse(PostgresProductReviewRepository);
 builder.registerAndUse(ProductReviewCreator);
 builder.registerAndUse(ProductReviewsByProductSearcher);
-
-// Retention - User
-builder.register(RetentionUserRepository).use(FakeRetentionUserRepository);
-builder.registerAndUse(FakeRetentionUserRepository);
-builder.registerAndUse(UserLastActivityUpdater);
-builder
-	.registerAndUse(UpdateLastActivityDateOnUserUpdated)
-	.addTag("subscriber");
 
 // Retention - Email
 builder.registerAndUse(WelcomeEmailSender);
