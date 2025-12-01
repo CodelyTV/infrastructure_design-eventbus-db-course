@@ -38,26 +38,41 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async publishEvents(events: DomainEvent[]): Promise<void> {
-		events.forEach((event) => {
-			console.log(`\n📤 Publishing event \`${event.eventName}\``);
-		});
-
 		await this.connection.sql.begin(async (tx) => {
-			await Promise.all(
-				events.map((event) => this.insertEvent(event, tx)),
-			);
+			for (const event of events) {
+				const subscribers =
+					this.eventNameToSubscribers().searchSubscribers(
+						event.eventName,
+					);
+
+				console.log(
+					`\n📤 Publishing event \`${event.eventName}\` to:\n${subscribers.map((s) => `\t→ ${s.name()}`).join("\n")}`,
+				);
+
+				await Promise.all(
+					subscribers.map((subscriber) =>
+						this.insertEventForSubscriber(
+							event,
+							subscriber.name(),
+							tx,
+						),
+					),
+				);
+			}
 		});
 	}
 
-	private async insertEvent(
+	private async insertEventForSubscriber(
 		event: DomainEvent,
+		subscriberName: string,
 		tx: TransactionSql,
 	): Promise<Row[]> {
 		return tx`
 			INSERT INTO public.domain_events_to_consume
-				(id, name, attributes, occurred_at)
+				(event_id, subscriber_name, name, attributes, occurred_at)
 			VALUES (
 				${event.eventId},
+				${subscriberName},
 				${event.eventName},
 				${tx.json(event.toPrimitives() as JSONValue)},
 				${event.occurredAt}
