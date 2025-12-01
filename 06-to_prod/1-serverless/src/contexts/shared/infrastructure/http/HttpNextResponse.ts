@@ -47,4 +47,8 @@ export class HttpNextResponse {
 	static ok(): NextResponse {
 		return new NextResponse(null, { status: 200 });
 	}
+
+	static unauthorized(): NextResponse {
+		return new NextResponse("Unauthorized", { status: 401 });
+	}
 }

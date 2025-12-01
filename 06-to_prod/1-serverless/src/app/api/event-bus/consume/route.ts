@@ -9,6 +9,11 @@ import { withErrorHandling } from "../../../../contexts/shared/infrastructure/ht
 
 export const GET = withErrorHandling(
 	async (request: NextRequest): Promise<NextResponse> => {
+		const authHeader = request.headers.get("authorization");
+		if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+			return HttpNextResponse.unauthorized();
+		}
+
 		const searchParams = request.nextUrl.searchParams;
 		const subscribersParam = searchParams.get("subscribers");
 
