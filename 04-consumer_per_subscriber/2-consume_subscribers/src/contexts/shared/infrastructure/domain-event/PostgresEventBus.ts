@@ -27,12 +27,16 @@ export class PostgresEventBus implements EventBus {
 		await retry(async () => await this.publishEvents(events), 3, 30);
 	}
 
-	async consume(limit: number): Promise<void> {
+	async consume(subscribers: string[] | "*", limit: number): Promise<void> {
 		await this.connection.sql.begin(async (tx) => {
-			const eventsToConsume = await this.searchEventsToConsume(limit);
+			const rows = await this.searchEventsToConsume(
+				subscribers,
+				limit,
+				tx,
+			);
 
-			for (const event of eventsToConsume) {
-				await this.executeEventSubscribers(event, tx);
+			for (const row of rows) {
+				await this.executeSubscriberForEvent(row, tx);
 			}
 		});
 	}
@@ -80,36 +84,32 @@ export class PostgresEventBus implements EventBus {
 		`;
 	}
 
-	private async searchEventsToConsume(limit: number): Promise<DomainEvent[]> {
-		const rows = await this.connection.sql<
-			{
-				id: string;
-				name: string;
-				attributes: Record<string, unknown>;
-				occurred_at: Date;
-			}[]
-		>`
-			SELECT id, name, attributes, occurred_at
+	private async searchEventsToConsume(
+		subscribers: string[] | "*",
+		limit: number,
+		tx: TransactionSql,
+	): Promise<
+		{
+			event_id: string;
+			subscriber_name: string;
+			name: string;
+			attributes: Record<string, unknown>;
+			occurred_at: Date;
+		}[]
+	> {
+		const where =
+			subscribers === "*"
+				? ""
+				: tx`WHERE subscriber_name = ANY(${subscribers})`;
+
+		return tx`
+			SELECT event_id, subscriber_name, name, attributes, occurred_at
 			FROM public.domain_events_to_consume
+			${where}
 			ORDER BY inserted_at ASC
 			LIMIT ${limit}
 			FOR UPDATE SKIP LOCKED
 		`;
-
-		if (rows.length === 0) {
-			return [];
-		}
-
-		return rows
-			.map((row) =>
-				this.eventNameToClass().searchEvent(
-					row.id,
-					row.name,
-					row.attributes,
-					row.occurred_at,
-				),
-			)
-			.filter((event): event is DomainEvent => event !== null);
 	}
 
 	private eventNameToClass(): DomainEventNameToClass {
@@ -128,39 +128,55 @@ export class PostgresEventBus implements EventBus {
 		return this.eventNameToSubscribersCache;
 	}
 
-	private async executeEventSubscribers(
-		event: DomainEvent,
+	private async executeSubscriberForEvent(
+		row: {
+			event_id: string;
+			subscriber_name: string;
+			name: string;
+			attributes: Record<string, unknown>;
+			occurred_at: Date;
+		},
 		tx: TransactionSql,
 	): Promise<void> {
-		const subscribers = this.eventNameToSubscribers().searchSubscribers(
-			event.eventName,
+		const event = this.eventNameToClass().searchEvent(
+			row.event_id,
+			row.name,
+			row.attributes,
+			row.occurred_at,
 		);
 
-		console.log(`\n📤 Sending event \`${event.eventName}\` to:`);
+		if (!event) {
+			console.error(`\t❌ Unknown event type: ${row.name}`);
 
-		for (const subscriber of subscribers) {
-			console.log(`\t→ 💻 ${subscriber.name()}`);
-
-			await this.executeEventSubscriber(subscriber, event);
+			return;
 		}
 
-		await tx`
-			DELETE FROM public.domain_events_to_consume
-			WHERE id = ${event.eventId}
-		`;
-	}
+		const subscriber = this.eventNameToSubscribers()
+			.searchSubscribers(event.eventName)
+			.find((s) => s.name() === row.subscriber_name);
 
-	private async executeEventSubscriber(
-		subscriber: DomainEventSubscriber<DomainEvent>,
-		event: DomainEvent,
-	): Promise<void> {
+		if (!subscriber) {
+			console.error(`\t❌ Unknown subscriber: ${row.subscriber_name}`);
+
+			return;
+		}
+
+		console.log(
+			`\n📥 Consuming event \`${event.eventName}\` for subscriber \`${subscriber.name()}\``,
+		);
+
 		try {
 			await subscriber.on(event);
 		} catch (error) {
 			console.error(
-				`\t\t❌ Error executing subscriber ${subscriber.name()} for ${event.eventName}:`,
+				`\t❌ Error executing subscriber ${subscriber.name()} for ${event.eventName}:`,
 				error,
 			);
 		}
+
+		await tx`
+			DELETE FROM public.domain_events_to_consume
+			WHERE event_id = ${row.event_id} AND subscriber_name = ${row.subscriber_name}
+		`;
 	}
 }

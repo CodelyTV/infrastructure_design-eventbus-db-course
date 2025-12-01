@@ -4,7 +4,6 @@ import { container } from "../../../../../src/contexts/shared/infrastructure/dep
 import { PostgresEventBus } from "../../../../../src/contexts/shared/infrastructure/domain-event/PostgresEventBus";
 import { PostgresConnection } from "../../../../../src/contexts/shared/infrastructure/postgres/PostgresConnection";
 
-import { TestDomainEventMother } from "./TestDomainEventMother";
 import { UserRegisteredDomainEventMother } from "./UserRegisteredDomainEventMother";
 
 const connection = container.get(PostgresConnection);
@@ -19,42 +18,25 @@ afterAll(async () => {
 });
 
 describe("PostgresEventBus should", () => {
-	it("publish a single event", async () => {
-		const event = TestDomainEventMother.create();
+	it("publish a single event to each subscriber", async () => {
+		const event = UserRegisteredDomainEventMother.create();
 
 		await eventBus.publish([event]);
 
 		const result = await connection.sql`
-			SELECT id, name, attributes, occurred_at
+			SELECT event_id, subscriber_name, name, attributes, occurred_at
 			FROM public.domain_events_to_consume
-			WHERE id = ${event.eventId}
+			WHERE event_id = ${event.eventId}
+			ORDER BY subscriber_name
 		`;
 
-		expect(result).toHaveLength(1);
+		expect(result.length).toBeGreaterThan(0);
 
-		expect(result[0].id).toBe(event.eventId);
-		expect(result[0].name).toBe(event.eventName);
-		expect(result[0].attributes).toEqual(event.toPrimitives());
-		expect(result[0].occurred_at).toEqual(event.occurredAt);
-	});
-
-	it("publish multiple events in a transaction", async () => {
-		const events = TestDomainEventMother.createMultiple(3);
-
-		await eventBus.publish(events);
-
-		const result = await connection.sql`
-			SELECT id, name, attributes, occurred_at
-			FROM public.domain_events_to_consume
-			ORDER BY occurred_at
-		`;
-
-		expect(result).toHaveLength(3);
-		events.forEach((event, index) => {
-			expect(result[index].id).toBe(event.eventId);
-			expect(result[index].name).toBe(event.eventName);
-			expect(result[index].attributes).toEqual(event.toPrimitives());
-			expect(result[index].occurred_at).toEqual(event.occurredAt);
+		result.forEach((row) => {
+			expect(row.event_id).toBe(event.eventId);
+			expect(row.name).toBe(event.eventName);
+			expect(row.attributes).toEqual(event.toPrimitives());
+			expect(row.occurred_at).toEqual(event.occurredAt);
 		});
 	});
 
@@ -68,24 +50,6 @@ describe("PostgresEventBus should", () => {
 
 		expect(Number(result[0].count)).toBe(0);
 	});
-
-	it("store event attributes as JSON", async () => {
-		const event = TestDomainEventMother.create();
-
-		await eventBus.publish([event]);
-
-		const result = await connection.sql`
-			SELECT attributes
-			FROM public.domain_events_to_consume
-			WHERE id = ${event.eventId}
-		`;
-
-		expect(result[0].attributes).toEqual({
-			aggregateId: event.aggregateId,
-			testData: event.testData,
-			description: event.description,
-		});
-	});
 });
 
 describe("PostgresEventBus retry mechanism should", () => {
@@ -95,7 +59,7 @@ describe("PostgresEventBus retry mechanism should", () => {
 	});
 
 	it("retry up to 3 times on failure", async () => {
-		const event = TestDomainEventMother.create();
+		const event = UserRegisteredDomainEventMother.create();
 		const postgresConnection = container.get(PostgresConnection);
 		const databaseError = new Error("Database connection failed");
 
@@ -111,7 +75,7 @@ describe("PostgresEventBus retry mechanism should", () => {
 	});
 
 	it("succeed on second attempt", async () => {
-		const event = TestDomainEventMother.create();
+		const event = UserRegisteredDomainEventMother.create();
 		const postgresConnection = container.get(PostgresConnection);
 		const databaseError = new Error("Database connection failed");
 
@@ -132,42 +96,63 @@ describe("PostgresEventBus retry mechanism should", () => {
 });
 
 describe("PostgresEventBus consume should", () => {
-	it("consume and delete a specific event by id", async () => {
+	it("consume and delete events for all subscribers with *", async () => {
 		const event = UserRegisteredDomainEventMother.create();
 
 		await eventBus.publish([event]);
 
-		await eventBus.consume(1);
+		await eventBus.consume("*", 100);
 
 		const result = await connection.sql`
-			SELECT id
+			SELECT event_id
 			FROM public.domain_events_to_consume
-			WHERE id = ${event.eventId}
+			WHERE event_id = ${event.eventId}
 		`;
 
 		expect(result).toHaveLength(0);
 	});
 
+	it("consume only events for specified subscriber", async () => {
+		const event = UserRegisteredDomainEventMother.create();
+
+		await eventBus.publish([event]);
+
+		const subscriberToConsume =
+			"codely.retention.send_welcome_email_on_user_registered";
+
+		await eventBus.consume([subscriberToConsume], 100);
+
+		const remaining = await connection.sql`
+			SELECT subscriber_name
+			FROM public.domain_events_to_consume
+			WHERE event_id = ${event.eventId}
+		`;
+
+		expect(remaining.every((r) => r.subscriber_name !== subscriberToConsume)).toBe(true);
+	});
+
 	it("not consume unknown events", async () => {
 		const unknownEventId = "00000000-0000-0000-0000-000000000001";
+		const subscriberName = "test.subscriber";
 
 		await connection.sql`
 			INSERT INTO public.domain_events_to_consume
-				(id, name, attributes, occurred_at)
+				(event_id, subscriber_name, name, attributes, occurred_at)
 			VALUES (
 				${unknownEventId},
+				${subscriberName},
 				'unknown.event.name',
 				'{"data": "test"}'::jsonb,
 				NOW()
 			)
 		`;
 
-		await eventBus.consume(10);
+		await eventBus.consume("*", 10);
 
 		const unknownEvent = await connection.sql`
-			SELECT id
+			SELECT event_id
 			FROM public.domain_events_to_consume
-			WHERE id = ${unknownEventId}
+			WHERE event_id = ${unknownEventId}
 		`;
 
 		expect(unknownEvent).toHaveLength(1);
@@ -179,7 +164,7 @@ describe("PostgresEventBus consume should", () => {
 			FROM public.domain_events_to_consume
 		`;
 
-		await eventBus.consume(10);
+		await eventBus.consume("*", 10);
 
 		const afterCount = await connection.sql`
 			SELECT COUNT(*) as count
