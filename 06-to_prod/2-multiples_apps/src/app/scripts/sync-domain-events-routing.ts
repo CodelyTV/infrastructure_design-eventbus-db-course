@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console,no-await-in-loop */
 import "reflect-metadata";
 
 import { DomainEvent } from "../../contexts/shared/domain/event/DomainEvent";
 import { DomainEventSubscriber } from "../../contexts/shared/domain/event/DomainEventSubscriber";
 import { container } from "../../contexts/shared/infrastructure/dependency-injection/diod.config";
-import { DomainEventNameToSubscribers } from "../../contexts/shared/infrastructure/domain-event/DomainEventNameToSubscribers";
+import { DomainEventSubscriberNameToEventNames } from "../../contexts/shared/infrastructure/domain-event/DomainEventSubscriberNameToEventNames";
 import { PostgresConnection } from "../../contexts/shared/infrastructure/postgres/PostgresConnection";
 
 async function main(): Promise<void> {
@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 		>("subscriber")
 		.map((id) => container.get(id));
 
-	const eventNameToSubscribers = new DomainEventNameToSubscribers(
+	const subscriberToEvents = new DomainEventSubscriberNameToEventNames(
 		subscribers,
 	);
 
@@ -24,13 +24,8 @@ async function main(): Promise<void> {
 		`\n🔄 Syncing routing for ${subscribers.length} subscribers...\n`,
 	);
 
-	for (const subscriber of subscribers) {
-		const subscriberName = subscriber.name();
-		const eventClasses = subscriber.subscribedTo();
-
-		for (const eventClass of eventClasses) {
-			const eventName = eventClass.eventName;
-
+	for (const [subscriberName, eventNames] of subscriberToEvents.all()) {
+		for (const eventName of eventNames) {
 			await connection.sql`
 				INSERT INTO public.domain_events_routing (event_name, subscriber_name)
 				VALUES (${eventName}, ${subscriberName})
