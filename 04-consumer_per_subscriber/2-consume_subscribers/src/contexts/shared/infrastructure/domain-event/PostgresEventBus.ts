@@ -12,6 +12,7 @@ import { PostgresConnection } from "../postgres/PostgresConnection";
 
 import { DomainEventNameToClass } from "./DomainEventNameToClass";
 import { DomainEventNameToSubscribers } from "./DomainEventNameToSubscribers";
+import { DomainEventSubscriberNameToClass } from "./DomainEventSubscriberNameToClass";
 
 type DomainEventToConsume = {
 	eventId: string;
@@ -24,6 +25,7 @@ type DomainEventToConsume = {
 export class PostgresEventBus implements EventBus {
 	private eventNameToClassCache?: DomainEventNameToClass;
 	private eventNameToSubscribersCache?: DomainEventNameToSubscribers;
+	private subscriberNameToClassCache?: DomainEventSubscriberNameToClass;
 
 	constructor(
 		private readonly connection: PostgresConnection,
@@ -136,6 +138,13 @@ export class PostgresEventBus implements EventBus {
 		return this.eventNameToSubscribersCache;
 	}
 
+	private subscriberNameToClass(): DomainEventSubscriberNameToClass {
+		this.subscriberNameToClassCache ??=
+			new DomainEventSubscriberNameToClass(this.eventSubscribersGetter());
+
+		return this.subscriberNameToClassCache;
+	}
+
 	private async executeSubscriberForEvent(
 		row: DomainEventToConsume,
 		tx: TransactionSql,
@@ -153,15 +162,9 @@ export class PostgresEventBus implements EventBus {
 			return;
 		}
 
-		const subscriber = this.eventNameToSubscribers()
-			.searchSubscribers(event.eventName)
-			.find((s) => s.name() === row.subscriberName);
-
-		if (!subscriber) {
-			console.error(`\t❌ Unknown subscriber: ${row.subscriberName}`);
-
-			return;
-		}
+		const subscriber = this.subscriberNameToClass().find(
+			row.subscriberName,
+		);
 
 		console.log(
 			`\n📥 Consuming event \`${event.eventName}\` for subscriber \`${subscriber.name()}\``,
