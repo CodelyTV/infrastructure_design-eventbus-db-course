@@ -20,9 +20,12 @@ type DomainEventToConsume = {
 	subscriberName: string;
 	attributes: DomainEventAttributes;
 	occurredAt: Date;
+	retries: number;
 };
 
 export class PostgresEventBus implements EventBus {
+	private static readonly MAX_RETRIES = 3;
+
 	private eventNameToClassCache?: DomainEventNameToClass;
 	private eventNameToSubscribersCache?: DomainEventNameToSubscribers;
 	private subscriberNameToClassCache?: DomainEventSubscriberNameToClass;
@@ -102,10 +105,10 @@ export class PostgresEventBus implements EventBus {
 		limit: number,
 		tx: TransactionSql,
 	): Promise<DomainEventToConsume[]> {
-		const where =
+		const subscriberFilter =
 			subscribers === "*"
 				? tx``
-				: tx`WHERE subscriber_name = ANY(${subscribers})`;
+				: tx`AND subscriber_name = ANY(${subscribers})`;
 
 		return tx`
 			SELECT
@@ -113,9 +116,11 @@ export class PostgresEventBus implements EventBus {
 				subscriber_name AS "subscriberName",
 				name AS "eventName",
 				attributes,
-				occurred_at AS "occurredAt"
+				occurred_at AS "occurredAt",
+				retries
 			FROM public.domain_events_to_consume
-			${where}
+			WHERE is_in_dead_letter = false
+			${subscriberFilter}
 			ORDER BY inserted_at ASC
 			LIMIT ${limit}
 			FOR UPDATE SKIP LOCKED
@@ -173,21 +178,37 @@ export class PostgresEventBus implements EventBus {
 		}
 
 		console.log(
-			`\n📥 Consuming event \`${event.eventName}\` for subscriber \`${subscriber.name()}\``,
+			`\n📥 Consuming event \`${event.eventName}\` for subscriber \`${subscriber.name()}\` (retry ${row.retries}/${PostgresEventBus.MAX_RETRIES})`,
 		);
 
 		try {
 			await subscriber.on(event);
+
+			await tx`
+				DELETE FROM public.domain_events_to_consume
+				WHERE event_id = ${row.eventId} AND subscriber_name = ${row.subscriberName}
+			`;
 		} catch (error) {
 			console.error(
 				`\t❌ Error executing subscriber ${subscriber.name()} for ${event.eventName}:`,
 				error,
 			);
-		}
 
-		await tx`
-			DELETE FROM public.domain_events_to_consume
-			WHERE event_id = ${row.eventId} AND subscriber_name = ${row.subscriberName}
-		`;
+			if (row.retries >= PostgresEventBus.MAX_RETRIES - 1) {
+				console.error(`\t💀 Moving event to dead letter after ${PostgresEventBus.MAX_RETRIES} failed attempts`);
+
+				await tx`
+					UPDATE public.domain_events_to_consume
+					SET is_in_dead_letter = true
+					WHERE event_id = ${row.eventId} AND subscriber_name = ${row.subscriberName}
+				`;
+			} else {
+				await tx`
+					UPDATE public.domain_events_to_consume
+					SET retries = retries + 1
+					WHERE event_id = ${row.eventId} AND subscriber_name = ${row.subscriberName}
+				`;
+			}
+		}
 	}
 }
