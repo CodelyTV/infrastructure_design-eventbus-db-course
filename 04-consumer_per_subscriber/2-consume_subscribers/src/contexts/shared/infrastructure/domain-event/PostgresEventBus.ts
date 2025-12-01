@@ -1,7 +1,10 @@
 /* eslint-disable no-await-in-loop,no-console */
 import { JSONValue, Row, TransactionSql } from "postgres";
 
-import { DomainEvent } from "../../domain/event/DomainEvent";
+import {
+	DomainEvent,
+	DomainEventAttributes,
+} from "../../domain/event/DomainEvent";
 import { DomainEventSubscriber } from "../../domain/event/DomainEventSubscriber";
 import { EventBus } from "../../domain/event/EventBus";
 import { retry } from "../../domain/retry";
@@ -9,6 +12,14 @@ import { PostgresConnection } from "../postgres/PostgresConnection";
 
 import { DomainEventNameToClass } from "./DomainEventNameToClass";
 import { DomainEventNameToSubscribers } from "./DomainEventNameToSubscribers";
+
+type DomainEventToConsume = {
+	eventId: string;
+	eventName: string;
+	subscriberName: string;
+	attributes: DomainEventAttributes;
+	occurredAt: Date;
+};
 
 export class PostgresEventBus implements EventBus {
 	private eventNameToClassCache?: DomainEventNameToClass;
@@ -88,22 +99,19 @@ export class PostgresEventBus implements EventBus {
 		subscribers: string[] | "*",
 		limit: number,
 		tx: TransactionSql,
-	): Promise<
-		{
-			event_id: string;
-			subscriber_name: string;
-			name: string;
-			attributes: Record<string, unknown>;
-			occurred_at: Date;
-		}[]
-	> {
+	): Promise<DomainEventToConsume[]> {
 		const where =
 			subscribers === "*"
 				? ""
 				: tx`WHERE subscriber_name = ANY(${subscribers})`;
 
 		return tx`
-			SELECT event_id, subscriber_name, name, attributes, occurred_at
+			SELECT
+				event_id AS "eventId",
+				subscriber_name AS "subscriberName",
+				name AS "eventName",
+				attributes,
+				occurred_at AS "occurredAt"
 			FROM public.domain_events_to_consume
 			${where}
 			ORDER BY inserted_at ASC
@@ -129,34 +137,28 @@ export class PostgresEventBus implements EventBus {
 	}
 
 	private async executeSubscriberForEvent(
-		row: {
-			event_id: string;
-			subscriber_name: string;
-			name: string;
-			attributes: Record<string, unknown>;
-			occurred_at: Date;
-		},
+		row: DomainEventToConsume,
 		tx: TransactionSql,
 	): Promise<void> {
 		const event = this.eventNameToClass().searchEvent(
-			row.event_id,
-			row.name,
+			row.eventId,
+			row.eventName,
 			row.attributes,
-			row.occurred_at,
+			row.occurredAt,
 		);
 
 		if (!event) {
-			console.error(`\t❌ Unknown event type: ${row.name}`);
+			console.error(`\t❌ Unknown event type: ${row.eventName}`);
 
 			return;
 		}
 
 		const subscriber = this.eventNameToSubscribers()
 			.searchSubscribers(event.eventName)
-			.find((s) => s.name() === row.subscriber_name);
+			.find((s) => s.name() === row.subscriberName);
 
 		if (!subscriber) {
-			console.error(`\t❌ Unknown subscriber: ${row.subscriber_name}`);
+			console.error(`\t❌ Unknown subscriber: ${row.subscriberName}`);
 
 			return;
 		}
@@ -176,7 +178,7 @@ export class PostgresEventBus implements EventBus {
 
 		await tx`
 			DELETE FROM public.domain_events_to_consume
-			WHERE event_id = ${row.event_id} AND subscriber_name = ${row.subscriber_name}
+			WHERE event_id = ${row.eventId} AND subscriber_name = ${row.subscriberName}
 		`;
 	}
 }
