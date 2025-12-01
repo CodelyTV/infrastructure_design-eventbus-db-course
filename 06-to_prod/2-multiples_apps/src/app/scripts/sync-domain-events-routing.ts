@@ -1,0 +1,56 @@
+/* eslint-disable no-console */
+import "reflect-metadata";
+
+import { DomainEvent } from "../../contexts/shared/domain/event/DomainEvent";
+import { DomainEventSubscriber } from "../../contexts/shared/domain/event/DomainEventSubscriber";
+import { container } from "../../contexts/shared/infrastructure/dependency-injection/diod.config";
+import { DomainEventNameToSubscribers } from "../../contexts/shared/infrastructure/domain-event/DomainEventNameToSubscribers";
+import { PostgresConnection } from "../../contexts/shared/infrastructure/postgres/PostgresConnection";
+
+async function main(): Promise<void> {
+	const connection = container.get(PostgresConnection);
+
+	const subscribers = container
+		.findTaggedServiceIdentifiers<
+			DomainEventSubscriber<DomainEvent>
+		>("subscriber")
+		.map((id) => container.get(id));
+
+	const eventNameToSubscribers = new DomainEventNameToSubscribers(
+		subscribers,
+	);
+
+	console.log(
+		`\n🔄 Syncing routing for ${subscribers.length} subscribers...\n`,
+	);
+
+	for (const subscriber of subscribers) {
+		const subscriberName = subscriber.name();
+		const eventClasses = subscriber.subscribedTo();
+
+		for (const eventClass of eventClasses) {
+			const eventName = eventClass.eventName;
+
+			await connection.sql`
+				INSERT INTO public.domain_events_routing (event_name, subscriber_name)
+				VALUES (${eventName}, ${subscriberName})
+				ON CONFLICT (event_name, subscriber_name) DO NOTHING
+			`;
+
+			console.log(`  ✅ ${eventName} → ${subscriberName}`);
+		}
+	}
+
+	console.log(`\n✨ Routing sync completed!\n`);
+}
+
+main()
+	.catch((error) => {
+		console.error("❌ Error during routing sync:", error);
+		process.exit(1);
+	})
+	.finally(async () => {
+		await container.get(PostgresConnection).end();
+		console.log("🔌 Connection closed");
+		process.exit(0);
+	});

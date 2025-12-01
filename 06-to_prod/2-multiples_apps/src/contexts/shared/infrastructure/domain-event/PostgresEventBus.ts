@@ -11,7 +11,6 @@ import { retry } from "../../domain/retry";
 import { PostgresConnection } from "../postgres/PostgresConnection";
 
 import { DomainEventNameToClass } from "./DomainEventNameToClass";
-import { DomainEventNameToSubscribers } from "./DomainEventNameToSubscribers";
 import { DomainEventSubscriberNameToClass } from "./DomainEventSubscriberNameToClass";
 
 type DomainEventToConsume = {
@@ -27,7 +26,6 @@ export class PostgresEventBus implements EventBus {
 	private static readonly MAX_RETRIES = 3;
 
 	private eventNameToClassCache?: DomainEventNameToClass;
-	private eventNameToSubscribersCache?: DomainEventNameToSubscribers;
 	private subscriberNameToClassCache?: DomainEventSubscriberNameToClass;
 
 	constructor(
@@ -60,26 +58,40 @@ export class PostgresEventBus implements EventBus {
 	private async publishEvents(events: DomainEvent[]): Promise<void> {
 		await this.connection.sql.begin(async (tx) => {
 			for (const event of events) {
-				const subscribers =
-					this.eventNameToSubscribers().searchSubscribers(
+				const subscriberNames =
+					await this.searchSubscriberNamesForEvent(
 						event.eventName,
+						tx,
 					);
 
 				console.log(
-					`\n📤 Publishing event \`${event.eventName}\` to:\n${subscribers.map((s) => `\t→ ${s.name()}`).join("\n")}`,
+					`\n📤 Publishing event \`${event.eventName}\` to:\n${subscriberNames.map((s) => `\t→ ${s}`).join("\n")}`,
 				);
 
 				await Promise.all(
-					subscribers.map((subscriber) =>
+					subscriberNames.map((subscriberName) =>
 						this.insertEventForSubscriber(
 							event,
-							subscriber.name(),
+							subscriberName,
 							tx,
 						),
 					),
 				);
 			}
 		});
+	}
+
+	private async searchSubscriberNamesForEvent(
+		eventName: string,
+		tx: TransactionSql,
+	): Promise<string[]> {
+		const rows = await tx`
+			SELECT subscriber_name
+			FROM public.domain_events_routing
+			WHERE event_name = ${eventName}
+		`;
+
+		return rows.map((row) => row.subscriber_name);
 	}
 
 	private async insertEventForSubscriber(
@@ -133,14 +145,6 @@ export class PostgresEventBus implements EventBus {
 		);
 
 		return this.eventNameToClassCache;
-	}
-
-	private eventNameToSubscribers(): DomainEventNameToSubscribers {
-		this.eventNameToSubscribersCache ??= new DomainEventNameToSubscribers(
-			this.eventSubscribersGetter(),
-		);
-
-		return this.eventNameToSubscribersCache;
 	}
 
 	private subscriberNameToClass(): DomainEventSubscriberNameToClass {

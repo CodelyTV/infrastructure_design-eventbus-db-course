@@ -12,7 +12,8 @@
 		"test:ci": "jest --testMatch '**/*.ci.test.ts'",
 		"create-courses": "ts-node ./src/app/scripts/create-courses.ts",
 		"search-courses": "ts-node ./src/app/scripts/search-courses.ts",
-		"consume-events": "ts-node ./src/app/scripts/consume-postgres-events.ts"
+		"consume-events": "ts-node ./src/app/scripts/consume-postgres-events.ts",
+		"sync-routing": "ts-node ./src/app/scripts/sync-domain-events-routing.ts"
 	},
 	"dependencies": {
 		"diod": "^3.0.0",

@@ -12,3 +12,11 @@ CREATE TABLE domain_events_to_consume (
 
 CREATE INDEX idx__domain_events_to_consume__inserted_at ON public.domain_events_to_consume (inserted_at);
 CREATE INDEX idx__domain_events_to_consume__subscriber_name ON public.domain_events_to_consume (subscriber_name);
+
+CREATE TABLE domain_events_routing (
+	event_name TEXT NOT NULL,
+	subscriber_name TEXT NOT NULL,
+	PRIMARY KEY (event_name, subscriber_name)
+);
+
+CREATE INDEX idx__domain_events_routing__event_name ON public.domain_events_routing (event_name);
