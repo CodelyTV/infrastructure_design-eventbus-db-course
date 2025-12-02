@@ -1,3 +1,5 @@
+ALTER DATABASE postgres SET idle_in_transaction_session_timeout = '30s';
+
 CREATE TABLE domain_events_to_consume (
 	event_id uuid NOT NULL,
 	subscriber_name TEXT NOT NULL,
